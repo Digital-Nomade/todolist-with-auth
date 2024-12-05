@@ -1,12 +1,14 @@
 'use client'
-
 import {
   Button,
   FormGroup,
   Input
 } from "@/components/atomic";
+import { LandingLink } from "@/components/atomic/landing-link/LandingLink";
 import { LoadingIcon } from "@/components/icons";
 import { useLoginUserMutation } from "@/lib/features/auth/authApi";
+import { authenticateUser } from "@/lib/features/auth/authSlice";
+import { useAppDispatch } from "@/lib/hooks";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -26,11 +28,15 @@ export default function LoginPage() {
     }
   } = useForm<Inputs>()
   const [login, { isLoading }] = useLoginUserMutation()
+  const dispatch = useAppDispatch()
 
-  function onSubmit(data: Inputs) {
+  async function onSubmit(data: Inputs) {
     try {
-      const res = login(data)
-      console.log(res)
+      const res = await login(data)
+      if (res.data?.token) {
+        dispatch(authenticateUser({ accessToken: res.data.token, isAuthenticated: true }))
+      }
+
     } catch(error: unknown) {
       console.log(error)
     }
@@ -61,7 +67,8 @@ export default function LoginPage() {
       >
         <main className="w-full p-8 flex column h-[100vh] items-center overflow-hidden" >
           <form className="flex flex-col p-8 border border-danger-light max-h-[684px] mx-auto min-w-[450px]">
-            <h1 className="font-bold text-4xl text-danger-light mb-16">Login</h1>
+            <LandingLink />
+            <h2 className="font-bold text-4xl text-danger-light mb-16">Login</h2>
             <FormGroup>
               <Input
                 errorMessage={errors['email']?.message}
@@ -90,7 +97,7 @@ export default function LoginPage() {
             <FormGroup>
               <Button
                 className="flex relative"
-                type="button"
+                type="submit"
                 variant="fill"
                 buttonType="secondary"
                 onClick={handleSubmit(onSubmit)}
