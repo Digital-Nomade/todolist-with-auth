@@ -21,6 +21,10 @@ button {
   cursor: pointer;
 }
 
+button:disabled {
+  opacity: .3;
+}
+
 input[type="date"]::placeholder {
   color: #eeb0b4;
   font-weight: 100;
