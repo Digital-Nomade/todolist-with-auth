@@ -1,4 +1,5 @@
 import StoreProvider from '@/lib/StoreProvider';
+import { NextUIProvider } from '@nextui-org/react';
 import './globals.css';
 
 export default function RootLayout({
@@ -9,9 +10,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-gradient-to-br from-primary-light to-primary-dark">
-        <StoreProvider>
-          {children}
-        </StoreProvider>
+        <NextUIProvider className="flex h-full">
+          <StoreProvider>
+            {children}
+          </StoreProvider>
+        </NextUIProvider>
       </body>
     </html>
   );
