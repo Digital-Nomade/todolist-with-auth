@@ -1,0 +1,1 @@
+export type TodoNavigationDirection = 'next' | 'previous'

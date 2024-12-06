@@ -2,7 +2,9 @@ import { combineReducers, configureStore } from '@reduxjs/toolkit'
 import { FLUSH, PAUSE, PERSIST, persistReducer, PURGE, REGISTER, REHYDRATE } from 'redux-persist'
 import storage from 'redux-persist/lib/storage'
 import { api } from './api'
+
 import authReducer from './features/auth/authSlice'
+import todoReducer from './features/todos/todoSlice'
 
 const persistConfig = {
   key: 'root',
@@ -11,6 +13,7 @@ const persistConfig = {
 
 const rootReducer = combineReducers({
   auth: authReducer,
+  todo: todoReducer,
   [api.reducerPath]: api.reducer
 })
 

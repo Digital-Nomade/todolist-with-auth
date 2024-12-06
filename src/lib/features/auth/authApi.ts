@@ -12,9 +12,9 @@ export const authApi = api.injectEndpoints({
           username: email,
           password,
         },
-        // headers: {
-        //   'content-type': 'application/json'
-        // }
+        headers: {
+          'content-type': 'application/json'
+        }
       }),
       transformResponse: (result: LoginResponse) => result,
       invalidatesTags: ['user']

@@ -30,9 +30,7 @@ export function SignUpProfileForm({ navigate }: Props) {
 
   function onSubmit(data: unknown) {
     setLoading(true)
-    console.log(data)
     setTimeout(() => {
-      console.log(data)
       setLoading(false)
       navigate()
     }, 2000)

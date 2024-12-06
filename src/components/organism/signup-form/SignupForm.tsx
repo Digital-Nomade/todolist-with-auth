@@ -3,6 +3,7 @@
 import { Button } from "@/components/atomic/button/Button";
 import { FormGroup } from "@/components/atomic/form-group/FormGroup";
 import { Input } from "@/components/atomic/input/Input";
+import { LandingLink } from "@/components/atomic/landing-link/LandingLink";
 import { LoadingIcon } from "@/components/icons";
 import Link from "next/link";
 import { useState } from "react";
@@ -44,8 +45,9 @@ export function SignUpForm({ moveToNextStep }: Props) {
 
   return (
     <main key={'signup-form'} className="w-full p-8 flex column h-[100vh] items-center overflow-hidden" >
-      <form className="flex flex-col p-8 border border-danger-light h-full max-h-[684px] mx-auto min-w-[450px]">
-        <h1 className="font-bold text-4xl text-danger-light mb-16">Sign Up</h1>
+      <form className="flex flex-col p-8 border border-danger-light max-h-[684px] mx-auto min-w-[450px]">
+        <LandingLink />
+        <h2 className="font-bold text-4xl text-danger-light mb-16">Sign Up</h2>
         <FormGroup>
           <Input
             errorMessage={errors['email']?.message}

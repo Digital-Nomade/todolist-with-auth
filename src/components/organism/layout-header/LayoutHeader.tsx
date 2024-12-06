@@ -1,20 +1,23 @@
 import {
   AddIcon,
+  DashboardIcon,
   HomeIcon,
   NotificationIcon,
   SearchIcon,
   UserIcon
 } from "@/components/icons";
+import { setToggleAddTodoModal } from "@/lib/features/todos/todoSlice";
+import { useAppDispatch } from "@/lib/hooks";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { NotificaitonMenu } from "../notification-menu/NotificationMenu";
 
-interface Props {
-  path: string
-}
-
-export function LayoutHeader({ path }: Props) {
+export function LayoutHeader() {
+  const dispatch = useAppDispatch()
+  const path = usePathname()
 
   function handleAddToDo() {
-    // TODO: Add redux function
+    dispatch(setToggleAddTodoModal())
   }
 
   function handleViewNotifications() {
@@ -25,10 +28,8 @@ export function LayoutHeader({ path }: Props) {
     // TODO: Add function to show notifications
   }
 
-  console.log('===> ' + path)
-
   return (
-    <section className="max-w-[1284px] mx-auto">
+    <section className="max-w-[1284px] mx-auto w-full">
       <header className="flex justify-between w-full pt-8 px-8 h-fit flex-1 mb-14">
         <div className="flex gap-8 items-center w-full">
           {path !== '/home' && (
@@ -39,22 +40,39 @@ export function LayoutHeader({ path }: Props) {
               </div>
             </div>
           )}
-          <h1 className="text-6xl font-thin text-white">Welcome Bruno</h1>
-          <button className="h-fit" onClick={handleAddToDo}>
-            <AddIcon />
-          </button>
+          <div className="flex items-center gap-2">
+            <h1 className="text-6xl font-thin text-white">Welcome Bruno</h1>
+            <button className="h-fit" onClick={handleAddToDo}>
+              <AddIcon />
+            </button>
+          </div>
         </div>
         <nav>
           <ul className="flex gap-12 items-end">
-            <li className="flex-1">
-              <Link href="#">
+            <li className="flex-1 ">
+              <Link
+                href="/home"
+                className={`relative flex justify-center items-center ${path === '/home' ? 'after:content-[" "] after:h-[48px] after:w-[48px] after:bg-danger-light after:absolute after:opacity-20 after:rounded-full' : ''}`}
+              >
                 <HomeIcon />
               </Link>
             </li>
-            <li className="h-[21px]">
-              <button onClick={handleViewNotifications}>
+            <li>
+              <Link
+                href="/dashboard"
+                className={`relative flex justify-center items-center ${path === '/dashboard' ? 'after:content-[" "] after:h-[48px] after:w-[48px] after:bg-danger-light after:absolute after:opacity-20 after:rounded-full' : ''}`}
+              >
+                <DashboardIcon />
+              </Link>
+            </li>
+            <li className="h-[21px] after:h-[48px] relative">
+              <button
+                type="button"
+                onClick={handleViewNotifications}
+              >
                 <NotificationIcon hasNotification />
               </button>
+              <NotificaitonMenu />
             </li>
             <li className="h-[48px]">
               <button onClick={handleShowUserProfile}>

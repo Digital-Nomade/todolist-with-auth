@@ -9,7 +9,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="bg-gradient-to-br from-primary-light to-primary-dark">
+      <body className="bg-gradient-to-br from-secondary to-primary-dark">
         <NextUIProvider className="flex h-full">
           <StoreProvider>
             {children}
