@@ -4,6 +4,7 @@ import storage from 'redux-persist/lib/storage'
 import { api } from './api'
 
 import authReducer from './features/auth/authSlice'
+import notificationReducer from './features/notifications/notificationsSlice'
 import todoReducer from './features/todos/todoSlice'
 
 const persistConfig = {
@@ -14,6 +15,7 @@ const persistConfig = {
 const rootReducer = combineReducers({
   auth: authReducer,
   todo: todoReducer,
+  notification: notificationReducer,
   [api.reducerPath]: api.reducer
 })
 

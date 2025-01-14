@@ -6,15 +6,26 @@ import {
   SearchIcon,
   UserIcon
 } from "@/components/icons";
+import { checkIfHasNotification } from "@/lib/features/notifications/notificationsSlice";
 import { setToggleAddTodoModal } from "@/lib/features/todos/todoSlice";
-import { useAppDispatch } from "@/lib/hooks";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { NotificaitonMenu } from "../notification-menu/NotificationMenu";
 
 export function LayoutHeader() {
   const dispatch = useAppDispatch()
   const path = usePathname()
+  const { hasNotifications, notifications } = useAppSelector(state => state.notification)
+
+  const [showNotifications, setShowNotifications] = useState(false)
+
+  useEffect(() => {
+    if (notifications) {
+      dispatch(checkIfHasNotification())
+    }
+  }, [notifications])
 
   function handleAddToDo() {
     dispatch(setToggleAddTodoModal())
@@ -22,6 +33,7 @@ export function LayoutHeader() {
 
   function handleViewNotifications() {
     // TODO: Add function to show notifications
+    setShowNotifications(state => !state)
   }
 
   function handleShowUserProfile() {
@@ -70,9 +82,9 @@ export function LayoutHeader() {
                 type="button"
                 onClick={handleViewNotifications}
               >
-                <NotificationIcon hasNotification />
+                <NotificationIcon hasNotification={hasNotifications} />
               </button>
-              <NotificaitonMenu />
+              {showNotifications && <NotificaitonMenu />}
             </li>
             <li className="h-[48px]">
               <button onClick={handleShowUserProfile}>

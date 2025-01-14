@@ -21,9 +21,8 @@ export default function Dashboard() {
 
   function handleSelectTodo(todo: Todo) {
     setSelectedTodo(todo)
-
     const tIndex = todosData?.data.findIndex(t => t.id === todo.id)
-    console.log(tIndex)
+
     if (tIndex !== undefined) {
       console.log(tIndex)
       setTodoIndex(tIndex)
