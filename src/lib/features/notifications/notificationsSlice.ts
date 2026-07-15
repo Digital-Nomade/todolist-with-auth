@@ -1,29 +1,29 @@
-import { Notification } from '@/types/Notification.type'
-import { createSlice } from '@reduxjs/toolkit'
-import { NotificationsInitialState } from './notificationsTypes'
+import { Notification } from "@/types/Notification.type"
+import { createSlice } from "@reduxjs/toolkit"
+import { NotificationsInitialState } from "./notificationsTypes"
 
 const notificationArray: Notification[] = [
   {
-    id: '#091283912839',
-    title: 'Notification 1',
+    id: "#091283912839",
+    title: "Notification 1",
     isViewed: false,
     viewedIn: null
   },
   {
-    id: '#0192038758',
-    title: 'Notification 2',
+    id: "#0192038758",
+    title: "Notification 2",
     isViewed: false,
     viewedIn: null
   },
   {
-    id: '#1029751987hj;l',
-    title: 'Notification 3',
+    id: "#1029751987hj;l",
+    title: "Notification 3",
     isViewed: false,
     viewedIn: null
   },
   {
-    id: '#1239818978jhcj0',
-    title: 'Notification 4',
+    id: "#1239818978jhcj0",
+    title: "Notification 4",
     isViewed: false,
     viewedIn: null
   },
@@ -35,12 +35,11 @@ const initialState: NotificationsInitialState = {
 }
 
 export const notificationSlice = createSlice({
-  name: 'notifications',
+  name: "notifications",
   initialState,
   reducers: { 
     viewNotification: (state, { payload }) => {
       const { notificationID } = payload
-      console.log(payload)
       state.notifications = state.notifications.map(notification => {
         if (notification.id === notificationID) {
           notification.isViewed = true

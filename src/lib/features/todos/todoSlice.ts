@@ -1,5 +1,5 @@
-import { createSlice } from '@reduxjs/toolkit'
-import { TodoData } from './todoTypes'
+import { createSlice } from "@reduxjs/toolkit"
+import { TodoData } from "./todoTypes"
 
 
 const initialState: TodoData = {
@@ -7,7 +7,7 @@ const initialState: TodoData = {
 }
 
 export const authSlice = createSlice({
-  name: 'todo',
+  name: "todo",
   initialState,
   reducers: { 
     setToggleAddTodoModal: (state) => {

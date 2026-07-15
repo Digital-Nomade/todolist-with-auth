@@ -1,23 +1,20 @@
-export interface AuthData {
-  email: string
-  password: string
-  isUserAuthenticated: boolean
-  credentials: {
-    accessToken: string | null,
-  }
+import type { UserStatus } from "@/gql/graphql";
+
+export interface AuthUser {
+  email: string;
+  emailVerifiedAt: string | null;
+  id: string;
+  status: UserStatus;
+  username: string;
 }
 
-export interface AuthenticateUserPayload {
-  isAuthenticated: boolean
-  accessToken: string
+export interface AuthData {
+  initialized: boolean;
+  isAuthenticated: boolean;
+  user: AuthUser | null;
 }
 
 export interface LoginAccountPayload {
-  email: string
-  password: string
-}
-
-export interface LoginResponse {
-  id: string
-  token: string
+  identifier: string;
+  password: string;
 }

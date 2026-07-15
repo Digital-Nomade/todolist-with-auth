@@ -1,16 +1,9 @@
-import { combineReducers, configureStore } from '@reduxjs/toolkit'
-import { FLUSH, PAUSE, PERSIST, persistReducer, PURGE, REGISTER, REHYDRATE } from 'redux-persist'
-import storage from 'redux-persist/lib/storage'
-import { api } from './api'
+import { combineReducers, configureStore } from "@reduxjs/toolkit"
+import { api } from "./api"
 
-import authReducer from './features/auth/authSlice'
-import notificationReducer from './features/notifications/notificationsSlice'
-import todoReducer from './features/todos/todoSlice'
-
-const persistConfig = {
-  key: 'root',
-  storage: storage,
-}
+import authReducer from "./features/auth/authSlice"
+import notificationReducer from "./features/notifications/notificationsSlice"
+import todoReducer from "./features/todos/todoSlice"
 
 const rootReducer = combineReducers({
   auth: authReducer,
@@ -19,27 +12,15 @@ const rootReducer = combineReducers({
   [api.reducerPath]: api.reducer
 })
 
-const persistedReducer = persistReducer(persistConfig, rootReducer)
-
 export const makeStore = () => {
   return configureStore({
-    reducer: persistedReducer,
-    middleware: (getDefaultMiddleware) => getDefaultMiddleware({
-      serializableCheck: {
-        ignoredActions: [
-          FLUSH,
-          REHYDRATE,
-          PAUSE,
-          PERSIST,
-          PURGE,
-          REGISTER,
-        ],
-      }
-    }).concat([api.middleware]),
-    devTools: process.env.NODE_ENV !== 'production'
+    reducer: rootReducer,
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware().concat(api.middleware),
+    devTools: false,
   })
 }
 
 export type AppStore = ReturnType<typeof makeStore>
-export type RootState = ReturnType<AppStore['getState']>
-export type AppDispatch = AppStore['dispatch']
+export type RootState = ReturnType<AppStore["getState"]>
+export type AppDispatch = AppStore["dispatch"]

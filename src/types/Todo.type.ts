@@ -1,8 +1,11 @@
+/** An ISO-8601 DateTime string returned by or sent to GraphQL. */
+export type TodoDateTime = string
+
 export interface AddTodo {
   title: string
   description: string
-  dueTo: Date | null
-  reminderOn: Date | null
+  dueTo?: TodoDateTime | null
+  reminderOn?: TodoDateTime | null
 }
 
 export interface Todo {
@@ -10,10 +13,28 @@ export interface Todo {
   title: string
   description: string
   done: boolean
-  dueTo: Date | null
-  reminderOn: Date | null
-  createdAt: Date
-  updatedAt: Date
+  dueTo: TodoDateTime | null
+  reminderOn: TodoDateTime | null
+  createdAt: TodoDateTime
+  updatedAt: TodoDateTime
+}
+
+export interface UpdateTodo {
+  id: string
+  input: {
+    title?: string | null
+    description?: string | null
+    done?: boolean | null
+    dueTo?: TodoDateTime | null
+    reminderOn?: TodoDateTime | null
+  }
+}
+
+export interface TodoPagination {
+  currentPage?: number
+  limit?: number
+  orderBy?: "ASC" | "DESC"
+  total?: boolean
 }
 
 export interface PaginatedTodo {
@@ -21,4 +42,5 @@ export interface PaginatedTodo {
   first: number
   last: number
   limit: number
+  total: number | null
 }

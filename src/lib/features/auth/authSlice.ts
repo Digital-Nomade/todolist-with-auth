@@ -1,47 +1,36 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import {
-  AuthData,
-  AuthenticateUserPayload,
-  LoginAccountPayload
-} from './authTypes'
+import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import type { AuthData, AuthUser } from "./authTypes";
 
 const initialState: AuthData = {
-  email: '',
-  password: '',
-  isUserAuthenticated: false,
-  credentials: {
-    accessToken: null,
-  },
-}
+  initialized: false,
+  isAuthenticated: false,
+  user: null,
+};
 
 export const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState,
   reducers: {
-    persistLoginDataForSignUp: (state, { payload: { email, password}}: PayloadAction<LoginAccountPayload>) => {
-      state.email = email
-      state.password = password
-
+    sessionRestored: (state, { payload }: PayloadAction<AuthUser>) => {
+      state.initialized = true;
+      state.isAuthenticated = payload.status === "ACTIVE";
+      state.user = payload;
     },
-    resetAuthState: (state) => {
-      state.email = ''
-      state.password = ''
+    sessionCleared: (state) => {
+      state.initialized = true;
+      state.isAuthenticated = false;
+      state.user = null;
     },
-    authenticateUser: (state, { payload: { isAuthenticated, accessToken } }: PayloadAction<AuthenticateUserPayload>) => {
-      state.isUserAuthenticated = isAuthenticated
-      state.credentials.accessToken = accessToken
+    initializationFinished: (state) => {
+      state.initialized = true;
     },
-    signOut: (state) => {
-      state.credentials.accessToken = null
-    }
-  }
-})
+  },
+});
 
 export const {
-  resetAuthState,
-  authenticateUser,
-  signOut,
-  persistLoginDataForSignUp,
-} = authSlice.actions
+  initializationFinished,
+  sessionCleared,
+  sessionRestored,
+} = authSlice.actions;
 
-export default authSlice.reducer
+export default authSlice.reducer;
