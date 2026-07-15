@@ -1,4 +1,4 @@
-'use client'
+"use client"
 import {
   Button,
   FormGroup,
@@ -7,14 +7,15 @@ import {
 import { LandingLink } from "@/components/atomic/landing-link/LandingLink";
 import { LoadingIcon } from "@/components/icons";
 import { useLoginUserMutation } from "@/lib/features/auth/authApi";
-import { authenticateUser } from "@/lib/features/auth/authSlice";
-import { useAppDispatch } from "@/lib/hooks";
+import { safeAuthError } from "@/lib/features/auth/authErrors";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 interface Inputs {
-  email: string
+  identifier: string
   password: string
 }
 
@@ -28,17 +29,22 @@ export default function LoginPage() {
     }
   } = useForm<Inputs>()
   const [login, { isLoading }] = useLoginUserMutation()
-  const dispatch = useAppDispatch()
+  const [submitError, setSubmitError] = useState("")
+  const router = useRouter()
 
   async function onSubmit(data: Inputs) {
+    setSubmitError("")
     try {
-      const res = await login(data)
-      if (res.data?.token) {
-        dispatch(authenticateUser({ accessToken: res.data.token, isAuthenticated: true }))
+      const result = await login(data).unwrap()
+      if (result.user.status === "ACTIVE") {
+        router.replace("/home")
+      } else if (result.user.status === "PENDING_VERIFICATION") {
+        router.replace(`/check-email?email=${encodeURIComponent(result.user.email)}`)
+      } else {
+        setSubmitError("This account is suspended. Contact support for help.")
       }
-
-    } catch(error: unknown) {
-      console.log(error)
+    } catch(error) {
+      setSubmitError(safeAuthError(error, "Unable to sign in. Check your details and try again."))
     }
   }
 
@@ -46,7 +52,7 @@ export default function LoginPage() {
     <AnimatePresence mode="wait">
       <motion.div
         className="m-auto overflow-hidden"
-        key={'login'}
+        key={"login"}
         
         initial={{ 
           translateX: 300,
@@ -61,7 +67,7 @@ export default function LoginPage() {
           opacity: 0
         }}
         transition={{
-          type: 'spring',
+          type: "spring",
           duration: .7
         }}
       >
@@ -71,29 +77,35 @@ export default function LoginPage() {
             <h2 className="font-bold text-4xl text-danger-light mb-16">Login</h2>
             <FormGroup>
               <Input
-                errorMessage={errors['email']?.message}
-                label="email"
-                htmlFor="email"
-                type="email"
-                {...register('email', { required: 'Username is required' } )} 
+                errorMessage={errors.identifier?.message}
+                label="email or username"
+                htmlFor="identifier"
+                type="text"
+                autoComplete="username"
+                {...register("identifier", { required: "Email or username is required" } )}
               />
             </FormGroup>
             <FormGroup>
               <Input
-                errorMessage={errors['password']?.message}
+                errorMessage={errors["password"]?.message}
                 className="mb-4"
                 label="password"
                 htmlFor="password"
                 type="password"
-                {...register('password', { required: 'Min password length 6', minLength: 6 })}
+                autoComplete="current-password"
+                {...register("password", {
+                  required: "Password is required",
+                  minLength: { value: 8, message: "Password must be at least 8 characters" },
+                })}
               />
               <a
                 className="text-danger-light font-extralight text-lg ml-auto block text-right"
-                href="forgot-password"
+                href="/forgot-password"
               >
                 Forgot password?
               </a>
             </FormGroup>
+            {submitError && <p role="alert" className="mb-4 text-center text-danger-light">{submitError}</p>}
             <FormGroup>
               <Button
                 className="flex relative"
