@@ -9,13 +9,13 @@ export default defineConfig({
   reporter: [["list"], ["html", { open: "never" }]],
   timeout: 30_000,
   use: {
-    baseURL: "http://localhost:3001",
+    baseURL: "http://localhost:3883",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },
   webServer: {
     command: "npm run dev",
-    url: "http://localhost:3001",
+    url: "http://localhost:3883",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

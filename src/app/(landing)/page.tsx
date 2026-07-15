@@ -3,9 +3,9 @@ import Link from "next/link";
 export default function Home() {
   return (
     <main
-      className=" h-[100%] w-full p-8 max-w-[1200px] mx-auto"
+      className="mx-auto flex h-full w-full max-w-[1200px] flex-col overflow-hidden p-8"
     >
-      <div className="flex flex-1 justify-between mb-20">
+      <div className="mb-8 flex flex-shrink-0 justify-between">
         <section>
           <h1 className="font-light text-8xl text-white">You Do!</h1>
           <h2 className="font-extralight text-6xl text-white ml-[60%] text-nowrap">much more</h2>
@@ -23,7 +23,7 @@ export default function Home() {
           </nav>
         </header>
       </div>
-      <section className="flex justify-between text-white font-extralight h-full max-h-[600px] w-full gap-12">
+      <section className="flex min-h-0 flex-1 justify-between gap-12 text-white font-extralight w-full">
         <article className="p-4 flex-1">
           <p className="mb-4 text-xl">Tired of losing track of all your tasks and activities?</p>
           <p className="text-xl">

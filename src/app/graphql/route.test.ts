@@ -5,13 +5,13 @@ import { POST } from "./route";
 function createNextRequest({
   body = "{}",
   headers = {},
-  origin = "http://localhost:3001",
+  origin = "http://localhost:3883",
 }: {
   body?: string;
   headers?: Record<string, string>;
   origin?: string;
 } = {}) {
-  const url = new URL("http://localhost:3001/graphql");
+  const url = new URL("http://localhost:3883/graphql");
 
   return {
     headers: new Headers({

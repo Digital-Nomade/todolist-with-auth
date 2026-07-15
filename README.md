@@ -14,7 +14,7 @@ Next.js 14 frontend for a GraphQL todo application with access/refresh authentic
 
 - Node.js 20+
 - npm
-- Backend GraphQL API running at `http://localhost:3000/graphql`
+- Backend GraphQL API running at `http://localhost:3773/graphql`
 
 ## Environment
 
@@ -26,17 +26,17 @@ cp .env.example .env.local
 
 | Variable | Scope | Default | Purpose |
 |---|---|---|---|
-| `GRAPHQL_BACKEND_URL` | Server only | `http://localhost:3000/graphql` | Target for the same-origin `/graphql` proxy |
+| `GRAPHQL_BACKEND_URL` | Server only | `http://localhost:3773/graphql` | Target for the same-origin `/graphql` proxy |
 
-The frontend development server runs on port **3001** so it does not conflict with the backend on port **3000**.
+The frontend development server runs on port **3883** so it does not conflict with the backend on port **3773**.
 
 ## Scripts
 
 | Command | Description |
 |---|---|
-| `npm run dev` | Start Next.js on `http://localhost:3001` |
+| `npm run dev` | Start Next.js on `http://localhost:3883` |
 | `npm run build` | Production build |
-| `npm run start` | Start the production server |
+| `npm run start` | Start the production server on `http://localhost:3883` |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript check |
 | `npm run test` | Vitest unit test suite |
@@ -177,7 +177,7 @@ Playwright drives the full application in a real browser. Tests live under `e2e/
 
 Configuration lives in `playwright.config.ts`:
 
-- `baseURL` — `http://localhost:3001`
+- `baseURL` — `http://localhost:3883`
 - `webServer` — starts `npm run dev` automatically
 - Reports — `playwright-report/` and `test-results/` (gitignored)
 

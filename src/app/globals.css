@@ -12,6 +12,11 @@
   font-family: "Roboto", sans-serif;
 }
 
+html {
+  height: 100%;
+  background-color: #0E003A;
+}
+
 body {
   height: 100vh;
   width: 100%;

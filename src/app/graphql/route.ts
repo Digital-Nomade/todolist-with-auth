@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 
 const backendUrl =
-  process.env.GRAPHQL_BACKEND_URL ?? "http://localhost:3000/graphql";
+  process.env.GRAPHQL_BACKEND_URL ?? "http://localhost:3773/graphql";
 
 export async function POST(request: NextRequest) {
   const origin = request.headers.get("origin");
