@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { TodosList } from "@/components/feats/dashboard/todos-list/TodosList"
 import { TodoDetail } from "@/components/organism"
@@ -7,26 +7,34 @@ import { Todo } from "@/types/Todo.type"
 import { useEffect, useState } from "react"
 
 export default function Dashboard() {
-  const { data: todosData } = useListTodosQuery(null)
+  const { data: todosData, isError, isLoading } = useListTodosQuery()
   const [todos, setTodos] = useState<Todo[]>([])
   const [selectedTodo, setSelectedTodo] = useState<Todo>()
   const [todoIndex, setTodoIndex] = useState(0)
 
   useEffect(() => {
-    if (todosData && todosData.data.length) {
-      setTodos(todosData.data)
-      setSelectedTodo(todosData.data[0])
-    }
-  }, [])
+    const nextTodos = todosData?.data ?? []
+    setTodos(nextTodos)
+    setSelectedTodo(current =>
+      nextTodos.find(todo => todo.id === current?.id) ?? nextTodos[0]
+    )
+  }, [todosData])
 
   function handleSelectTodo(todo: Todo) {
     setSelectedTodo(todo)
     const tIndex = todosData?.data.findIndex(t => t.id === todo.id)
 
-    if (tIndex !== undefined) {
-      console.log(tIndex)
+    if (tIndex !== undefined && tIndex >= 0) {
       setTodoIndex(tIndex)
     }
+  }
+
+  if (isLoading) {
+    return <main className="p-8">Loading todos…</main>
+  }
+
+  if (isError) {
+    return <main className="p-8">Unable to load todos.</main>
   }
 
   return (
@@ -34,7 +42,7 @@ export default function Dashboard() {
       <div className="flex justify-between w-full pt-8 px-8 h-fit flex-1 pb-8">
         <section className=" border-r-1 pr-4 w-full max-w-[300px] flex flex-col flex-1 h-full">
           {
-            todos.length && selectedTodo && (
+            todos.length > 0 && selectedTodo && (
               <TodosList
                 handleSelectTodo={handleSelectTodo}
                 selectedTodoId={selectedTodo.id}

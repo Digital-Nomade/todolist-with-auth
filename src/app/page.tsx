@@ -31,7 +31,7 @@ export default function Home() {
 upcoming events and tasks.
           </p>
         </article>
-        <article className={`bg-[url('/images/dots.svg')] p-4 h-full flex flex-col flex-1 `}>
+        <article className={"bg-[url('/images/dots.svg')] p-4 h-full flex flex-col flex-1 "}>
           <p className="mb-8 text-xl">Don&apos;t forget your to-do&apos;s anymore.</p>
           <p className="mb-8 text-xl">With <strong className="font-bold">You Do!</strong> you much more, never forget what your wife asked you to buy at the grocery store. </p>
           <p className="mb-8 text-xl">Never forget the beer and steak your husband ask.</p>
