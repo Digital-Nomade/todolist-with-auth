@@ -1,8 +1,9 @@
-'use client'
+"use client"
 
-import { useRef } from 'react'
-import { Provider } from 'react-redux'
-import { AppStore, makeStore } from '../lib/store'
+import { useRef } from "react"
+import { Provider } from "react-redux"
+import { AppStore, makeStore } from "../lib/store"
+import { AuthBootstrap } from "./auth/AuthBootstrap"
 
 interface Props {
   children: React.ReactNode
@@ -15,5 +16,9 @@ export default function StoreProvider({ children }: Props) {
     storeRef.current = makeStore()
   }
 
-  return <Provider store={storeRef.current}>{children}</Provider>
+  return (
+    <Provider store={storeRef.current}>
+      <AuthBootstrap>{children}</AuthBootstrap>
+    </Provider>
+  )
 }
