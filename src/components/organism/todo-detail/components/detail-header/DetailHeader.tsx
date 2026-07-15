@@ -5,9 +5,9 @@ import { TodoNavigationDirection } from "../../types/TodoDetail.types";
 import { SectionReminderOn } from "../section-reminder-on/SectionReminderOn";
 
 interface Props {
-  todoTitle: AnimationScope<any>
-  previousButtonScope: AnimationScope<any>
-  nextButtonScope: AnimationScope<any>
+  todoTitle: AnimationScope<HTMLHeadingElement>
+  previousButtonScope: AnimationScope<HTMLDivElement>
+  nextButtonScope: AnimationScope<HTMLDivElement>
   currentTodo?: Todo
   todoIndex: number
   todos: Todo[]
@@ -35,7 +35,7 @@ export function DetailHeader({
           ref={todoTitle}
           className="text-4xl font-extralight text-white"
         >
-          {currentTodo?.title ?? 'no title'}
+          {currentTodo?.title ?? "no title"}
         </h1>
         <SectionReminderOn reminderOn={currentTodo?.reminderOn} />
       </div>
@@ -44,7 +44,7 @@ export function DetailHeader({
           <button
             className="relative flex justify-center items-center"
             type="button"
-            onClick={() => handleTodoNavigation('previous')}
+            onClick={() => handleTodoNavigation("previous")}
             disabled={todoIndex <= 0}
           >
             <div
@@ -57,7 +57,7 @@ export function DetailHeader({
           <button
             className="relative flex justify-center items-center"
             type="button"
-            onClick={() => handleTodoNavigation('next')}
+            onClick={() => handleTodoNavigation("next")}
             disabled={todoIndex >= (todos.length - 1)}
           >
             <div

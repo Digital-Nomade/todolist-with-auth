@@ -1,1 +1,1 @@
-export type TodoNavigationDirection = 'next' | 'previous'
+export type TodoNavigationDirection = "next" | "previous"

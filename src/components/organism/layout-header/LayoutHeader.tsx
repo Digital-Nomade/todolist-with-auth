@@ -7,17 +7,21 @@ import {
   UserIcon
 } from "@/components/icons";
 import { checkIfHasNotification } from "@/lib/features/notifications/notificationsSlice";
+import { useLogoutMutation } from "@/lib/features/auth/authApi";
 import { setToggleAddTodoModal } from "@/lib/features/todos/todoSlice";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { NotificaitonMenu } from "../notification-menu/NotificationMenu";
 
 export function LayoutHeader() {
   const dispatch = useAppDispatch()
   const path = usePathname()
+  const router = useRouter()
+  const user = useAppSelector(state => state.auth.user)
   const { hasNotifications, notifications } = useAppSelector(state => state.notification)
+  const [logout, { isLoading: isLoggingOut }] = useLogoutMutation()
 
   const [showNotifications, setShowNotifications] = useState(false)
 
@@ -25,7 +29,7 @@ export function LayoutHeader() {
     if (notifications) {
       dispatch(checkIfHasNotification())
     }
-  }, [notifications])
+  }, [dispatch, notifications])
 
   function handleAddToDo() {
     dispatch(setToggleAddTodoModal())
@@ -36,15 +40,19 @@ export function LayoutHeader() {
     setShowNotifications(state => !state)
   }
 
-  function handleShowUserProfile() {
-    // TODO: Add function to show notifications
+  async function handleLogout() {
+    try {
+      await logout().unwrap()
+    } finally {
+      router.replace("/login")
+    }
   }
 
   return (
     <section className="max-w-[1284px] mx-auto w-full">
       <header className="flex justify-between w-full pt-8 px-8 h-fit flex-1 mb-14">
         <div className="flex gap-8 items-center w-full">
-          {path !== '/home' && (
+          {path !== "/home" && (
             <div className="relative max-w-[300px] w-full">
               <input className="bg-transparent border border-danger-light rounded-lg p-2 placeholder:text-danger-light w-full" type="text" placeholder="search to do"/>
               <div className="absolute right-2 top-3">
@@ -53,7 +61,7 @@ export function LayoutHeader() {
             </div>
           )}
           <div className="flex items-center gap-2">
-            <h1 className="text-6xl font-thin text-white">Welcome Bruno</h1>
+            <h1 className="text-6xl font-thin text-white">Welcome {user?.username}</h1>
             <button className="h-fit" onClick={handleAddToDo}>
               <AddIcon />
             </button>
@@ -64,7 +72,7 @@ export function LayoutHeader() {
             <li className="flex-1 ">
               <Link
                 href="/home"
-                className={`relative flex justify-center items-center ${path === '/home' ? 'after:content-[" "] after:h-[48px] after:w-[48px] after:bg-danger-light after:absolute after:opacity-20 after:rounded-full' : ''}`}
+                className={`relative flex justify-center items-center ${path === "/home" ? 'after:content-[" "] after:h-[48px] after:w-[48px] after:bg-danger-light after:absolute after:opacity-20 after:rounded-full' : ""}`}
               >
                 <HomeIcon />
               </Link>
@@ -72,7 +80,7 @@ export function LayoutHeader() {
             <li>
               <Link
                 href="/dashboard"
-                className={`relative flex justify-center items-center ${path === '/dashboard' ? 'after:content-[" "] after:h-[48px] after:w-[48px] after:bg-danger-light after:absolute after:opacity-20 after:rounded-full' : ''}`}
+                className={`relative flex justify-center items-center ${path === "/dashboard" ? 'after:content-[" "] after:h-[48px] after:w-[48px] after:bg-danger-light after:absolute after:opacity-20 after:rounded-full' : ""}`}
               >
                 <DashboardIcon />
               </Link>
@@ -87,8 +95,13 @@ export function LayoutHeader() {
               {showNotifications && <NotificaitonMenu />}
             </li>
             <li className="h-[48px]">
-              <button onClick={handleShowUserProfile}>
+              <Link href="/profile" aria-label="Profile">
                 <UserIcon />
+              </Link>
+            </li>
+            <li>
+              <button type="button" onClick={handleLogout} disabled={isLoggingOut} className="text-danger-light underline">
+                {isLoggingOut ? "Signing out…" : "Logout"}
               </button>
             </li>
           </ul>

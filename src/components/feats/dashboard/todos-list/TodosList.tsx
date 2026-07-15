@@ -13,7 +13,7 @@ export function TodosList({ todos, handleSelectTodo, selectedTodoId }: Props) {
     todos.map(t => (
       <button
         key={t.id}
-        className={`flex justify-between ${selectedTodoId === t.id ? 'border-2 border-danger-light shadow-lg shadow-danger-light' :  'border-none'} px-4 py-2 bg-primary-dark-transparency rounded-3xl items-center mb-3 `}
+        className={`flex justify-between ${selectedTodoId === t.id ? "border-2 border-danger-light shadow-lg shadow-danger-light" :  "border-none"} px-4 py-2 bg-primary-dark-transparency rounded-3xl items-center mb-3 `}
         onClick={() => handleSelectTodo(t)}
       >
         <div className="flex gap-6">
@@ -22,14 +22,14 @@ export function TodosList({ todos, handleSelectTodo, selectedTodoId }: Props) {
             title={t.title}
             className=" text-white font-light text-left"
           >
-            {t.title.length > 14 ? t.title.substring(0, 14)+'...' : t.title}
+            {t.title.length > 14 ? t.title.substring(0, 14)+"..." : t.title}
           </p>
         </div>
         <div className="flex gap-4 items-center">
-          <span className={!!t.description ? ' opacity-100' : ' opacity-25'}>
+          <span className={!!t.description ? " opacity-100" : " opacity-25"}>
             <TextIcon />
           </span>
-          <span className={(!!t.dueTo || !!t.reminderOn) ? ' opacity-100' : ' opacity-25'}>
+          <span className={(!!t.dueTo || !!t.reminderOn) ? " opacity-100" : " opacity-25"}>
             <CalendarIcon />
           </span>
         </div>

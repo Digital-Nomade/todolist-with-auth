@@ -1,5 +1,5 @@
 interface Props {
-  reminderOn?: Date | undefined | null
+  reminderOn?: string | null
 }
 
 export function SectionReminderOn({ reminderOn }: Props) {

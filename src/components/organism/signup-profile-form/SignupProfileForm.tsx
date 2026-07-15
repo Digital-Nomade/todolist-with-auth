@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { Button, FormGroup, Input } from "@/components/atomic";
 import { LoadingIcon } from "@/components/icons";
@@ -28,7 +28,7 @@ export function SignUpProfileForm({ navigate }: Props) {
 
   const [loading, setLoading] = useState(false)
 
-  function onSubmit(data: unknown) {
+  function onSubmit() {
     setLoading(true)
     setTimeout(() => {
       setLoading(false)
@@ -41,20 +41,20 @@ export function SignUpProfileForm({ navigate }: Props) {
         <h1 className="font-bold text-4xl text-danger-light mb-16">Your info</h1>
         <FormGroup>
           <Input
-          errorMessage={errors['name']?.message}
+          errorMessage={errors["name"]?.message}
           label="name"
           htmlFor="name"
           type="text"
-          {...register('name', { required: 'You must provide a name', minLength: 3 })}
+          {...register("name", { required: "You must provide a name", minLength: 3 })}
         />
         </FormGroup>
         <FormGroup>
           <Input
-            errorMessage={errors['lastName']?.message}
+            errorMessage={errors["lastName"]?.message}
             label="last name"
             htmlFor="lastName"
             type="text"
-            {...register('lastName', { required: 'You must provide a last name.' })}
+            {...register("lastName", { required: "You must provide a last name." })}
           />
         </FormGroup>
         <FormGroup>
@@ -62,7 +62,7 @@ export function SignUpProfileForm({ navigate }: Props) {
             label="username"
             htmlFor="username"
             type="text"
-            {...register('username', { required: 'You must provide a unique user name' })}
+            {...register("username", { required: "You must provide a unique user name" })}
           />
         </FormGroup>
         <FormGroup>
@@ -70,7 +70,7 @@ export function SignUpProfileForm({ navigate }: Props) {
             label="birthdate"
             htmlFor="confirm-password"
             type="date"
-            {...register('birthdate')}
+            {...register("birthdate")}
           />
         </FormGroup>
         

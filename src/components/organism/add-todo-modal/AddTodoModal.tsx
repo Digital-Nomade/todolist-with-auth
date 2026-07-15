@@ -1,17 +1,17 @@
-import { Button, FormGroup, Input } from '@/components/atomic'
-import { useAddNewTodoMutation } from '@/lib/features/todos/todoApi'
-import { useAppSelector } from '@/lib/hooks'
-import { DatePicker } from '@nextui-org/react'
-import { isBefore } from 'date-fns'
-import { motion, useAnimate } from 'framer-motion'
-import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { Button, FormGroup, Input } from "@/components/atomic"
+import { useCreateTodoMutation } from "@/lib/features/todos/todoApi"
+import { useAppSelector } from "@/lib/hooks"
+import { DatePicker } from "@nextui-org/react"
+import { isBefore } from "date-fns"
+import { motion, useAnimate } from "framer-motion"
+import { useCallback, useEffect } from "react"
+import { useForm } from "react-hook-form"
 
 interface Inputs {
   title: string
   description: string
-  dueTo: Date,
-  reminderOn: Date,
+  dueTo?: Date,
+  reminderOn?: Date,
 }
 
 interface Props {
@@ -31,35 +31,19 @@ export function AddTodoModal({ handleToggleModal, isOpen }: Props) {
     }
   } = useForm<Inputs>()
   const { toggleAddTodoModal } = useAppSelector(state => state.todo)
-  const [createTodo, { }] = useAddNewTodoMutation()
+  const [createTodo] = useCreateTodoMutation()
   const [scope, animate] = useAnimate()
   const [scopeWrapper, animateWrapper] = useAnimate()
 
-  useEffect(() => {
-    function escKeyListener(event: any) {
-      if (event.key === 'Escape' && toggleAddTodoModal) {
-        handleCloseModal()
-      }
-    }
-
-    window.addEventListener('keydown', escKeyListener)
-
-    return () => {
-      window.removeEventListener('keydown', escKeyListener)
-    }
-  }, [toggleAddTodoModal])
-
-  if (!isOpen) return null
-
-  async function handleCloseModal() {
+  const handleCloseModal = useCallback(async () => {
     await animate(
       scope.current,
       {
         translateX: -1330,
       },
       {
-        ease: 'linear',
-        type: 'spring',
+        ease: "linear",
+        type: "spring",
         duration: .3
       }
     )
@@ -71,17 +55,37 @@ export function AddTodoModal({ handleToggleModal, isOpen }: Props) {
       {
         duration: .3
       }
-    ) 
+    )
     handleToggleModal()
-  }
+  }, [animate, animateWrapper, handleToggleModal, scope, scopeWrapper])
+
+  useEffect(() => {
+    function escKeyListener(event: KeyboardEvent) {
+      if (event.key === "Escape" && toggleAddTodoModal) {
+        handleCloseModal()
+      }
+    }
+
+    window.addEventListener("keydown", escKeyListener)
+
+    return () => {
+      window.removeEventListener("keydown", escKeyListener)
+    }
+  }, [handleCloseModal, toggleAddTodoModal])
+
+  if (!isOpen) return null
 
   async function onSubmit(data: Inputs) {
     try {
-      const response = await createTodo(data)
-      handleCloseModal()
+      await createTodo({
+        ...data,
+        dueTo: data.dueTo?.toISOString() ?? null,
+        reminderOn: data.reminderOn?.toISOString() ?? null,
+      }).unwrap()
+      await handleCloseModal()
       reset()
-    } catch (error: any) {
-      console.error(error)
+    } catch {
+      // The mutation exposes a sanitized error state through RTK Query.
     }
   }
 
@@ -99,7 +103,7 @@ export function AddTodoModal({ handleToggleModal, isOpen }: Props) {
       }}
       transition={{
         duration: .3,
-        ease: 'linear',
+        ease: "linear",
       }}
       className="top-0 left-0 absolute h-[100%] w-full flex justify-center items-center bg-[#00000099]"
       onAnimationComplete={() => {
@@ -118,9 +122,9 @@ export function AddTodoModal({ handleToggleModal, isOpen }: Props) {
               }
             },
             {
-              ease: 'linear', 
+              ease: "linear",
               duration: .3,
-              type: 'spring'
+              type: "spring"
             },
           )
         } else {
@@ -140,8 +144,8 @@ export function AddTodoModal({ handleToggleModal, isOpen }: Props) {
         }}
         transition={{
           duration: .3,
-          type: 'spring',
-          ease: 'linear',
+          type: "spring",
+          ease: "linear",
           delay: .2,
         }}
         ref={scope}
@@ -151,8 +155,8 @@ export function AddTodoModal({ handleToggleModal, isOpen }: Props) {
           <Input
             htmlFor='title'
             label='New Todo'
-            {...register('title', { required: true })}
-            errorMessage={errors['title']?.message}
+            {...register("title", { required: true })}
+            errorMessage={errors["title"]?.message}
           />
         </FormGroup>
         <FormGroup>
@@ -178,10 +182,10 @@ export function AddTodoModal({ handleToggleModal, isOpen }: Props) {
               h-[200px]
               p-2
             "
-            {...register('description')}
+            {...register("description")}
             name="description"
-            onChange={(event) => setValue('description', event.currentTarget.value)}
-            value={watch('description')}
+            onChange={(event) => setValue("description", event.currentTarget.value)}
+            value={watch("description")}
           />
         </FormGroup>
         <div className='flex justify-between items-center w-full danger'>
@@ -195,8 +199,8 @@ export function AddTodoModal({ handleToggleModal, isOpen }: Props) {
                 segment: "text-danger-light hover:text-danger-light",
                 innerWrapper: "text-danger-light",
               }}
-              { ...register('dueTo')}
-              onChange={(value) => setValue('dueTo', value.toDate('America'))}
+              { ...register("dueTo")}
+              onChange={(value) => setValue("dueTo", value.toDate("America"))}
 
             />
           </div>
@@ -213,8 +217,8 @@ export function AddTodoModal({ handleToggleModal, isOpen }: Props) {
               isDateUnavailable={(date) => {
                 return isBefore(date.toString(), new Date())
               }}
-              { ...register('reminderOn')}
-              onChange={(value) => setValue('reminderOn', value.toDate('America'))}
+              { ...register("reminderOn")}
+              onChange={(value) => setValue("reminderOn", value.toDate("America"))}
             />
           </div>
         </div>

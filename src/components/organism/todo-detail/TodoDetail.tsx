@@ -1,10 +1,13 @@
-'use client'
+"use client"
 
 import { Button } from "@/components/atomic/button/Button";
 import {
   CheckIcon
 } from "@/components/icons";
-import { useUpdateTodosMutation } from "@/lib/features/todos/todoApi";
+import {
+  isTodoUnavailableError,
+  useUpdateTodoMutation,
+} from "@/lib/features/todos/todoApi";
 import { PaginatedTodo, Todo } from "@/types/Todo.type";
 import { format } from "date-fns";
 import { useAnimate } from "framer-motion";
@@ -23,11 +26,12 @@ export function TodoDetail({ paginatedTodos, selectedTodo, onSelectTodo, tIndex 
   const [todoIndex, setTodoIndex] = useState(tIndex)
   const [todos, setTodos] = useState<Todo[]>()
   const [currentTodo, setCurrentTodo] = useState<Todo>()
-  const [todoDescription, animateTodoDescription] = useAnimate()
-  const [todoTitle, animateTodoTitle] = useAnimate()
-  const [nextButtonScope, animateNextButton] = useAnimate()
-  const [previousButtonScope, animatePreviousButton] = useAnimate()
-  const [updateTodo, {}] = useUpdateTodosMutation()
+  const [isUnavailable, setIsUnavailable] = useState(false)
+  const [todoDescription, animateTodoDescription] = useAnimate<HTMLDivElement>()
+  const [todoTitle, animateTodoTitle] = useAnimate<HTMLHeadingElement>()
+  const [nextButtonScope, animateNextButton] = useAnimate<HTMLDivElement>()
+  const [previousButtonScope, animatePreviousButton] = useAnimate<HTMLDivElement>()
+  const [updateTodo] = useUpdateTodoMutation()
 
   useEffect(() => {
     if (tIndex !== undefined) {
@@ -38,6 +42,7 @@ export function TodoDetail({ paginatedTodos, selectedTodo, onSelectTodo, tIndex 
   useEffect(() => {
     if (selectedTodo) {
       setCurrentTodo(selectedTodo)
+      setIsUnavailable(false)
     }
   }, [selectedTodo])
 
@@ -55,14 +60,14 @@ export function TodoDetail({ paginatedTodos, selectedTodo, onSelectTodo, tIndex 
 
   function handleTodoNavigation(direction: TodoNavigationDirection) {
     switch(direction) {
-      case 'next':
+      case "next":
         handleNext()
         break
-      case 'previous':``
+      case "previous":
         handlePrevious()
         break
       default:
-        throw new Error('direction failed')
+        throw new Error("direction failed")
     }
   }
 
@@ -75,7 +80,7 @@ export function TodoDetail({ paginatedTodos, selectedTodo, onSelectTodo, tIndex 
       nextClickAnimation()
       setTodoIndex(next)
       setCurrentTodo(todos[next])
-      onSelectTodo && onSelectTodo(todos[next])
+      onSelectTodo?.(todos[next])
     }
   }
 
@@ -88,7 +93,7 @@ export function TodoDetail({ paginatedTodos, selectedTodo, onSelectTodo, tIndex 
       previousClickAnimation()
       setTodoIndex(previous)
       setCurrentTodo(todos[previous])
-      onSelectTodo && onSelectTodo(todos[previous])
+      onSelectTodo?.(todos[previous])
     }
   }
 
@@ -98,31 +103,31 @@ export function TodoDetail({ paginatedTodos, selectedTodo, onSelectTodo, tIndex 
         { opacity: 0 },
         {
           duration: .001,
-          ease: 'linear'
+          ease: "linear"
         }
       )
     await animateTodoTitle(
       todoTitle.current,
       { opacity: 1 },
-      { duration: .3, ease: 'linear'}
+      { duration: .3, ease: "linear"}
     )
   }
 
   async function previousClickAnimation(): Promise<void> {
     await animateTodoDescription(
       todoDescription.current,
-      { translateX: -1330 },
+      { x: -1330 },
       {
         duration: .4,
-        type: 'spring',
+        type: "spring",
       }
     )
     await animateTodoDescription(
       todoDescription.current,
-      { translateX: 0 },
+      { x: 0 },
       {
         duration: .2,
-        type: 'spring'
+        type: "spring"
       }
     )
   }
@@ -131,21 +136,21 @@ export function TodoDetail({ paginatedTodos, selectedTodo, onSelectTodo, tIndex 
     await animateTodoDescription(
       todoDescription.current,
       {
-        translateX: 1330
+        x: 1330
       },
       {
         duration: .4,
-        type: 'spring',
+        type: "spring",
       }
     )
     await animateTodoDescription(
         todoDescription.current,
         {
-          translateX: 0
+          x: 0
         },
         {
           duration: .2,
-          type: 'spring'
+          type: "spring"
         }
       )
   }
@@ -153,23 +158,23 @@ export function TodoDetail({ paginatedTodos, selectedTodo, onSelectTodo, tIndex 
   async function previousButtonAnimation(): Promise<void> {
     await animatePreviousButton(
       previousButtonScope.current,
-      { opacity: 0, scale: 1 }, { duration: .2, type: 'spring', ease: 'easeInOut' }
+      { opacity: 0, scale: 1 }, { duration: .2, type: "spring", ease: "easeInOut" }
     )
     await animatePreviousButton(
       previousButtonScope.current,
-      { opacity: .2, scale: 1.3 }, { duration: .3, type: 'spring', ease: 'easeInOut', bounce: 2 }
+      { opacity: .2, scale: 1.3 }, { duration: .3, type: "spring", ease: "easeInOut", bounce: 2 }
     )
     await animatePreviousButton(
       previousButtonScope.current,
-      { opacity: .2, scale: .9 }, { duration: .2, type: 'spring', ease: 'easeInOut', bounce: 2 }
+      { opacity: .2, scale: .9 }, { duration: .2, type: "spring", ease: "easeInOut", bounce: 2 }
     )
     await animatePreviousButton(
       previousButtonScope.current,
-      { opacity: .2, scale: 1.3 }, { duration: .3, type: 'spring', ease: 'easeInOut', bounce: 2 }
+      { opacity: .2, scale: 1.3 }, { duration: .3, type: "spring", ease: "easeInOut", bounce: 2 }
     )
     await animatePreviousButton(
       previousButtonScope.current,
-      { opacity: 0, scale: 1 }, { duration: .2, type: 'spring', ease: 'easeInOut', bounce: 2 }
+      { opacity: 0, scale: 1 }, { duration: .2, type: "spring", ease: "easeInOut", bounce: 2 }
     )
   }
 
@@ -177,26 +182,26 @@ export function TodoDetail({ paginatedTodos, selectedTodo, onSelectTodo, tIndex 
     try {
       await animateNextButton(
         nextButtonScope.current,
-        { opacity: 0, scale: 1 }, { duration: .2, type: 'spring', ease: 'easeInOut' }
+        { opacity: 0, scale: 1 }, { duration: .2, type: "spring", ease: "easeInOut" }
       )
       await animateNextButton(
         nextButtonScope.current,
-        { opacity: .2, scale: 1.3 }, { duration: .3, type: 'spring', ease: 'easeInOut', bounce: 2 }
+        { opacity: .2, scale: 1.3 }, { duration: .3, type: "spring", ease: "easeInOut", bounce: 2 }
       )
       await animateNextButton(
         nextButtonScope.current,
-        { opacity: .2, scale: .9 }, { duration: .2, type: 'spring', ease: 'easeInOut', bounce: 2 }
+        { opacity: .2, scale: .9 }, { duration: .2, type: "spring", ease: "easeInOut", bounce: 2 }
       )
       await animateNextButton(
         nextButtonScope.current,
-        { opacity: .2, scale: 1.3 }, { duration: .3, type: 'spring', ease: 'easeInOut', bounce: 2 }
+        { opacity: .2, scale: 1.3 }, { duration: .3, type: "spring", ease: "easeInOut", bounce: 2 }
       )
       await animateNextButton(
         nextButtonScope.current,
-        { opacity: 0, scale: 1 }, { duration: .2, type: 'spring', ease: 'easeInOut', bounce: 2 }
+        { opacity: 0, scale: 1 }, { duration: .2, type: "spring", ease: "easeInOut", bounce: 2 }
       )
-    } catch(error) {
-      console.error(error)
+    } catch {
+      // Animation failures do not expose request or session details.
     }
   }
 
@@ -204,38 +209,60 @@ export function TodoDetail({ paginatedTodos, selectedTodo, onSelectTodo, tIndex 
     await animateTodoDescription(
       todoDescription.current,
       {
-        translateY: 200,
+        y: 200,
         opacity: 0,
       },
       {
         duration: .4,
-        type: 'spring',
+        type: "spring",
         bounce: .5,
       }
     )
     await await animateTodoDescription(
       todoDescription.current,
       {
-        translateY: 0,
+        y: 0,
         opacity: 1,
       },
       {
         duration: .3,
-        type: 'spring',
+        type: "spring",
         bounce: .5,
       }
     )
   }
 
   async function handleCheckTodo() {
+    if (!currentTodo) {
+      return
+    }
+
     checkTodoAnimation()
     titleAnimation()
 
     try {
-      await updateTodo({...currentTodo, done: !currentTodo?.done } as Todo)
+      const updatedTodo = await updateTodo({
+        id: currentTodo.id,
+        input: { done: !currentTodo.done },
+      }).unwrap()
+      setCurrentTodo(updatedTodo)
     } catch (error) {
-      console.error(error)
+      if (isTodoUnavailableError(error)) {
+        setCurrentTodo(undefined)
+        setIsUnavailable(true)
+        return
+      }
+
+      // Keep the current todo visible for retryable failures.
     }
+  }
+
+  if (isUnavailable) {
+    return (
+      <section className="mx-auto max-w-[684px]">
+        <p>This todo is unavailable.</p>
+      </section>
+    )
   }
 
   if (!todos) {
@@ -252,7 +279,7 @@ export function TodoDetail({ paginatedTodos, selectedTodo, onSelectTodo, tIndex 
        currentTodo={currentTodo}
        handleTodoNavigation={handleTodoNavigation}
        nextButtonScope={nextButtonScope}
-       previousButtonScope={nextButtonScope}
+       previousButtonScope={previousButtonScope}
        todoIndex={todoIndex}
        todoTitle={todoTitle}
        todos={todos}
@@ -271,7 +298,7 @@ export function TodoDetail({ paginatedTodos, selectedTodo, onSelectTodo, tIndex 
             currentTodo?.createdAt 
               && (
                 <p className="text-lg font-extralight text-white ">
-                  created at: {format(currentTodo?.createdAt, 'd LLL yyyy')}
+                  created at: {format(currentTodo?.createdAt, "d LLL yyyy")}
                 </p>
               )
           }
@@ -286,7 +313,7 @@ export function TodoDetail({ paginatedTodos, selectedTodo, onSelectTodo, tIndex 
           type="submit"
           onClick={handleCheckTodo}
         >
-          {selectedTodo?.done && <CheckIcon className=" absolute left-6" />}
+          {currentTodo?.done && <CheckIcon className=" absolute left-6" />}
           check
         </Button>
       </div>

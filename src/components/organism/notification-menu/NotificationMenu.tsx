@@ -1,4 +1,4 @@
-import { viewNotification } from '@/lib/features/notifications/notificationsSlice'
+import { viewNotification } from "@/lib/features/notifications/notificationsSlice"
 import { useAppDispatch, useAppSelector } from "@/lib/hooks"
 import { format } from "date-fns"
 
@@ -36,7 +36,7 @@ export function NotificaitonMenu() {
               disabled={notification.isViewed}
             >
               <p className=" leading-[19px]">{notification.title}</p>
-              {notification.viewedIn && <small>{format(notification.viewedIn, 'L')}</small>}
+              {notification.viewedIn && <small>{format(notification.viewedIn, "L")}</small>}
               {!notification.isViewed && <div className="h-[8px] w-[8px] bg-alert rounded-full" />}
             </button>
           ))

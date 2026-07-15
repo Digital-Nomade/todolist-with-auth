@@ -12,10 +12,10 @@ const Input = forwardRef(({ errorMessage, label, htmlFor, type, className, ...pr
   const [displayPassword, setDisplayPassword] = useState(false)
 
   function togglePasswordType() {
-    if(type === 'password' && !displayPassword) {
-      return 'password'
-    } else if (type === 'password' && displayPassword) {
-      return 'text'
+    if(type === "password" && !displayPassword) {
+      return "password"
+    } else if (type === "password" && displayPassword) {
+      return "text"
     } else {
       return type
     }
@@ -38,7 +38,7 @@ const Input = forwardRef(({ errorMessage, label, htmlFor, type, className, ...pr
         {label}
       </label>
       {
-        type === 'password' && 
+        type === "password" &&
         <button
           type="button"
           className="absolute right-1 top-4 z-10"
@@ -56,6 +56,6 @@ const Input = forwardRef(({ errorMessage, label, htmlFor, type, className, ...pr
   )
 })
 
-Input.displayName = 'Input'
+Input.displayName = "Input"
 
 export { Input };
