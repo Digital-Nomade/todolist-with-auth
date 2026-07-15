@@ -150,6 +150,7 @@ export function AddTodoModal({ handleToggleModal, isOpen }: Props) {
         }}
         ref={scope}
         className="h-2/3 w-1/2 bg-primary-dark p-8 rounded-lg flex flex-col mx-auto translate-x-[-1330]"
+        onSubmit={handleSubmit(onSubmit)}
       >
         <FormGroup>
           <Input
@@ -199,7 +200,6 @@ export function AddTodoModal({ handleToggleModal, isOpen }: Props) {
                 segment: "text-danger-light hover:text-danger-light",
                 innerWrapper: "text-danger-light",
               }}
-              { ...register("dueTo")}
               onChange={(value) => setValue("dueTo", value.toDate("America"))}
 
             />
@@ -217,7 +217,6 @@ export function AddTodoModal({ handleToggleModal, isOpen }: Props) {
               isDateUnavailable={(date) => {
                 return isBefore(date.toString(), new Date())
               }}
-              { ...register("reminderOn")}
               onChange={(value) => setValue("reminderOn", value.toDate("America"))}
             />
           </div>
