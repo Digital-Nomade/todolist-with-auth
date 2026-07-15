@@ -43,6 +43,7 @@ The frontend development server runs on port **3001** so it does not conflict wi
 | `npm run test:e2e` | Playwright end-to-end test suite |
 | `npm run test:e2e:ui` | Playwright interactive UI mode |
 | `npm run test:e2e:headed` | Playwright headed browser mode |
+| `npm run verify` | Lint, unit tests, and E2E (same as the pre-commit hook) |
 | `npm run codegen` | Regenerate GraphQL types from `src/schema.gql` |
 | `npm run storybook` | Start Storybook on `http://localhost:6006` |
 | `npm run build-storybook` | Build the static Storybook playbook |
@@ -225,6 +226,28 @@ npm run test:e2e
 4. Add new GraphQL operations to `e2e/fixtures/graphql-mock.ts` when the UI starts calling them.
 5. Run `npm run test:e2e` before opening a PR.
 
+## Git hooks
+
+[Husky](https://typicode.github.io/husky/) enforces quality checks around commits and pushes:
+
+| Hook | Command | Checks |
+|---|---|---|
+| `pre-commit` | `npm run lint && npm run test` | ESLint and Vitest unit tests |
+| `pre-push` | `npm run test:e2e` | Playwright end-to-end suite |
+
+Run the same checks manually with:
+
+```bash
+npm run verify
+```
+
+Hooks install automatically through the `prepare` script when you run `npm install`. To bypass hooks in an emergency:
+
+```bash
+HUSKY=0 git commit -m "your message"
+HUSKY=0 git push
+```
+
 ### E2E layout
 
 ```
@@ -301,11 +324,9 @@ npm run typecheck
 ## Verification checklist
 
 ```bash
+npm run verify
 npm run codegen
 npm run typecheck
-npm run lint
-npm run test
-npm run test:e2e
 npm run build-storybook
 npm run build
 ```
