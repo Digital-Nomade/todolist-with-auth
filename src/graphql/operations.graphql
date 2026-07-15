@@ -1,0 +1,144 @@
+fragment AuthPayloadFields on AuthPayload {
+  accessToken
+  expiresIn
+  id
+  refreshToken
+  user {
+    email
+    emailVerifiedAt
+    id
+    status
+    username
+  }
+}
+
+fragment UserFields on TodoUser {
+  birthdate
+  createdAt
+  email
+  emailVerifiedAt
+  id
+  lastName
+  name
+  profilePicture
+  status
+  updatedAt
+  username
+}
+
+fragment TodoFields on Todo {
+  createdAt
+  description
+  done
+  dueTo
+  id
+  reminderOn
+  title
+  updatedAt
+}
+
+mutation Login($input: LoginInput!) {
+  login(input: $input) {
+    ...AuthPayloadFields
+  }
+}
+
+mutation CreateUser($input: CreateUserDTO!) {
+  createUser(input: $input) {
+    message
+  }
+}
+
+mutation RefreshToken($input: RefreshTokenInput!) {
+  refreshToken(input: $input) {
+    ...AuthPayloadFields
+  }
+}
+
+mutation Logout($refreshToken: String!) {
+  logout(refreshToken: $refreshToken) {
+    message
+  }
+}
+
+mutation LogoutAll {
+  logoutAll {
+    message
+  }
+}
+
+mutation RequestPasswordReset($input: RequestPasswordResetInput!) {
+  requestPasswordReset(input: $input) {
+    message
+  }
+}
+
+mutation ResetPassword($input: ResetPasswordInput!) {
+  resetPassword(input: $input) {
+    message
+  }
+}
+
+mutation ResendVerificationEmail($input: ResendVerificationInput!) {
+  resendVerificationEmail(input: $input) {
+    message
+  }
+}
+
+mutation VerifyEmail($input: VerifyEmailInput!) {
+  verifyEmail(input: $input) {
+    ...UserFields
+  }
+}
+
+query Me {
+  me {
+    ...UserFields
+  }
+}
+
+mutation UpdateProfile($input: UpdateUserDTO!) {
+  updateProfile(input: $input) {
+    ...UserFields
+  }
+}
+
+mutation ChangePassword($input: ChangePasswordInput!) {
+  changePassword(input: $input) {
+    ...UserFields
+  }
+}
+
+query Todos($pagination: TodoPaginationInput) {
+  todos(pagination: $pagination) {
+    data {
+      ...TodoFields
+    }
+    first
+    last
+    limit
+    total
+  }
+}
+
+query Todo($id: ID!) {
+  todo(id: $id) {
+    ...TodoFields
+  }
+}
+
+mutation CreateTodo($input: CreateTodo!) {
+  createTodo(input: $input) {
+    ...TodoFields
+  }
+}
+
+mutation UpdateTodo($id: ID!, $input: UpdateTodo!) {
+  updateTodo(id: $id, input: $input) {
+    ...TodoFields
+  }
+}
+
+mutation DeleteTodo($id: ID!) {
+  deleteTodo(id: $id)
+}

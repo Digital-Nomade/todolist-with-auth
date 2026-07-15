@@ -1,0 +1,171 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type AuthPayload {
+  accessToken: String!
+  expiresIn: Float!
+  id: ID!
+  refreshToken: String!
+  user: AuthUserSnapshot!
+}
+
+type AuthUserSnapshot {
+  email: String!
+  emailVerifiedAt: DateTime
+  id: ID!
+  status: UserStatus!
+  username: String!
+}
+
+input ChangePasswordInput {
+  currentPassword: String!
+  newPassword: String!
+}
+
+input CreateTodo {
+  description: String!
+  dueTo: DateTime
+  reminderOn: DateTime
+  title: String!
+}
+
+input CreateUserDTO {
+  birthdate: DateTime!
+  email: String!
+  lastName: String!
+  name: String!
+  password: String!
+  profilePicture: String
+  username: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+input LoginInput {
+  identifier: String!
+  password: String!
+}
+
+type MessagePayload {
+  message: String!
+}
+
+type Mutation {
+  changePassword(input: ChangePasswordInput!): TodoUser!
+  createTodo(input: CreateTodo!): Todo!
+  createUser(input: CreateUserDTO!): RegisterPayload!
+  deleteTodo(id: ID!): Boolean!
+  login(input: LoginInput!): AuthPayload!
+  logout(refreshToken: String!): MessagePayload!
+  logoutAll: MessagePayload!
+  refreshToken(input: RefreshTokenInput!): AuthPayload!
+  requestPasswordReset(input: RequestPasswordResetInput!): MessagePayload!
+  resendVerificationEmail(input: ResendVerificationInput!): MessagePayload!
+  resetPassword(input: ResetPasswordInput!): MessagePayload!
+  updateProfile(input: UpdateUserDTO!): TodoUser!
+  updateTodo(id: ID!, input: UpdateTodo!): Todo!
+  verifyEmail(input: VerifyEmailInput!): TodoUser!
+}
+
+type PaginatedTodos {
+  data: [Todo!]!
+  first: Int!
+  last: Int!
+  limit: Int!
+  total: Int
+}
+
+type Query {
+  me: TodoUser!
+  todo(id: ID!): Todo!
+  todos(pagination: TodoPaginationInput): PaginatedTodos!
+}
+
+input RefreshTokenInput {
+  refreshToken: String!
+}
+
+type RegisterPayload {
+  message: String!
+}
+
+input RequestPasswordResetInput {
+  email: String!
+}
+
+input ResendVerificationInput {
+  email: String!
+}
+
+input ResetPasswordInput {
+  newPassword: String!
+  token: String!
+}
+
+type Todo {
+  createdAt: DateTime!
+  description: String!
+  done: Boolean!
+  dueTo: DateTime
+  id: ID!
+  reminderOn: DateTime
+  title: String!
+  updatedAt: DateTime!
+}
+
+enum TodoOrder {
+  ASC
+  DESC
+}
+
+input TodoPaginationInput {
+  currentPage: Int! = 1
+  limit: Int! = 10
+  orderBy: TodoOrder! = DESC
+  total: Boolean! = false
+}
+
+type TodoUser {
+  birthdate: DateTime!
+  createdAt: DateTime!
+  email: String!
+  emailVerifiedAt: DateTime
+  id: ID!
+  lastName: String!
+  name: String!
+  profilePicture: String
+  status: UserStatus!
+  updatedAt: DateTime!
+  username: String!
+}
+
+input UpdateTodo {
+  description: String
+  done: Boolean
+  dueTo: DateTime
+  reminderOn: DateTime
+  title: String
+}
+
+input UpdateUserDTO {
+  birthdate: DateTime
+  email: String
+  lastName: String
+  name: String
+  profilePicture: String
+  username: String
+}
+
+enum UserStatus {
+  ACTIVE
+  PENDING_VERIFICATION
+  SUSPENDED
+}
+
+input VerifyEmailInput {
+  token: String!
+}
