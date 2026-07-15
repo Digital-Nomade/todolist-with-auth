@@ -1,0 +1,19 @@
+# Regras do Projeto (Frontend NextJS + TypeScript)
+
+## Stack Tecnológica
+- NextJs with typescript
+- GraphQL
+- Tailwind
+- Redux
+- Zod
+- Socket.io
+- Framer Motion
+
+## Diretrizes de Código e Arquitetura
+
+
+## Tratamento de Erros
+
+
+## Habilidade de Escrita de Testes
+- Todos os testes devem estar juntos com os arquivos testados.
