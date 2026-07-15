@@ -39,7 +39,10 @@ The frontend development server runs on port **3001** so it does not conflict wi
 | `npm run start` | Start the production server |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript check |
-| `npm run test` | Vitest test suite |
+| `npm run test` | Vitest unit test suite |
+| `npm run test:e2e` | Playwright end-to-end test suite |
+| `npm run test:e2e:ui` | Playwright interactive UI mode |
+| `npm run test:e2e:headed` | Playwright headed browser mode |
 | `npm run codegen` | Regenerate GraphQL types from `src/schema.gql` |
 | `npm run storybook` | Start Storybook on `http://localhost:6006` |
 | `npm run build-storybook` | Build the static Storybook playbook |
@@ -159,7 +162,87 @@ GraphQL integration tests stub `global.fetch`, assert request variables and `aut
 5. Keep fake timers scoped to the single test that needs them (e.g. signup form simulated delays).
 6. Run `npm run test` before opening a PR.
 
-### Test layout
+## End-to-end testing
+
+Playwright drives the full application in a real browser. Tests live under `e2e/` and mock same-origin `POST /graphql` traffic so the suite runs without a live backend.
+
+### Tooling
+
+| Tool | Purpose |
+|---|---|
+| Playwright | Browser automation and assertions |
+| Chromium | Default desktop project |
+| GraphQL route mocks | Deterministic auth and todo flows |
+
+Configuration lives in `playwright.config.ts`:
+
+- `baseURL` — `http://localhost:3001`
+- `webServer` — starts `npm run dev` automatically
+- Reports — `playwright-report/` and `test-results/` (gitignored)
+
+Run the suite:
+
+```bash
+npm run test:e2e
+```
+
+### Fixtures and helpers
+
+| Path | Purpose |
+|---|---|
+| `e2e/fixtures/test-data.ts` | Users, todos, credentials |
+| `e2e/fixtures/graphql-mock.ts` | Intercepts `/graphql` and simulates API state |
+| `e2e/helpers/auth.ts` | Login and modal helpers |
+| `e2e/helpers/alerts.ts` | Targets app `p[role="alert"]` messages |
+
+`installGraphqlMock(page, options)` keeps an in-memory todo list and profile across requests inside a test. `seedAuthenticatedSession(page)` preloads a refresh token to exercise session restoration.
+
+### Scenarios covered
+
+| Area | Scenarios |
+|---|---|
+| Landing | Brand content, signup/login navigation |
+| Login | Active, invalid, pending verification, suspended |
+| Signup | Success, duplicate email error |
+| Forgot password | Generic success copy, back to login |
+| Check email | Resend verification, missing email guard |
+| Verify email | Valid token, invalid token, retry, missing token |
+| Reset password | Valid token, invalid token, missing token |
+| Route guards | Guest redirects, active-user auth redirects, refresh restore/failure |
+| Logout | Header logout |
+| Home todos | Detail rendering, navigation, mark done |
+| Dashboard | List selection, detail sync |
+| Create todo | Modal create and cancel |
+| Header | Notifications menu, profile navigation |
+| Profile | Update fields, change-password link, sign out all devices |
+| Change password | Success logout, invalid current password |
+
+### Adding a new E2E test
+
+1. Add or extend a `*.spec.ts` file under `e2e/`.
+2. Call `installGraphqlMock(page)` in `beforeEach` unless the flow is unauthenticated marketing content.
+3. Prefer `getByRole` and `getByLabelText`; use `appAlert(page)` for form errors.
+4. Add new GraphQL operations to `e2e/fixtures/graphql-mock.ts` when the UI starts calling them.
+5. Run `npm run test:e2e` before opening a PR.
+
+### E2E layout
+
+```
+e2e/
+├── fixtures/
+│   ├── graphql-mock.ts
+│   └── test-data.ts
+├── helpers/
+│   ├── alerts.ts
+│   └── auth.ts
+├── landing/
+├── auth/
+├── guards/
+├── todos/
+└── private/
+```
+
+### Unit test layout
 
 ```
 src/
@@ -222,6 +305,7 @@ npm run codegen
 npm run typecheck
 npm run lint
 npm run test
+npm run test:e2e
 npm run build-storybook
 npm run build
 ```
