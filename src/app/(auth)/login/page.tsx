@@ -8,6 +8,7 @@ import { LandingLink } from "@/components/atomic/landing-link/LandingLink";
 import { LoadingIcon } from "@/components/icons";
 import { useLoginUserMutation } from "@/lib/features/auth/authApi";
 import { safeAuthError } from "@/lib/features/auth/authErrors";
+import { storeVerificationEmail } from "@/lib/features/auth/verificationFlow";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -39,7 +40,8 @@ export default function LoginPage() {
       if (result.user.status === "ACTIVE") {
         router.replace("/home")
       } else if (result.user.status === "PENDING_VERIFICATION") {
-        router.replace(`/check-email?email=${encodeURIComponent(result.user.email)}`)
+        storeVerificationEmail(result.user.email);
+        router.replace("/check-email");
       } else {
         setSubmitError("This account is suspended. Contact support for help.")
       }
@@ -73,9 +75,11 @@ export default function LoginPage() {
       >
         <main className="w-full p-8 flex column h-[100vh] items-center overflow-hidden" >
           <form className="flex flex-col p-8 border border-danger-light max-h-[684px] mx-auto min-w-[450px]">
-            <LandingLink />
-            <h2 className="font-bold text-4xl text-danger-light mb-16">Login</h2>
-            <FormGroup>
+            <header className="flex flex-col justify-center w-full items-center">
+              <LandingLink />
+              <h2 className="font-bold text-4xl text-danger-light mb-12">Login</h2>
+            </header>
+            <FormGroup className="mb-4">
               <Input
                 errorMessage={errors.identifier?.message}
                 label="email or username"
@@ -85,7 +89,7 @@ export default function LoginPage() {
                 {...register("identifier", { required: "Email or username is required" } )}
               />
             </FormGroup>
-            <FormGroup>
+            <FormGroup className="mb-4">
               <Input
                 errorMessage={errors["password"]?.message}
                 className="mb-4"
@@ -106,7 +110,7 @@ export default function LoginPage() {
               </a>
             </FormGroup>
             {submitError && <p role="alert" className="mb-4 text-center text-danger-light">{submitError}</p>}
-            <FormGroup>
+            <FormGroup className="mb-4">
               <Button
                 className="flex relative"
                 type="submit"

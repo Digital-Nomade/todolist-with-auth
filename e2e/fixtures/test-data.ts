@@ -73,7 +73,15 @@ export const credentials = {
   invalid: { identifier: "person", password: "wrong-password" },
 };
 
-export const authPayload = (user: typeof activeUser) => ({
+type AuthPayloadUser = {
+  email: string;
+  emailVerifiedAt: string | null;
+  id: string;
+  status: "ACTIVE" | "PENDING_VERIFICATION" | "SUSPENDED";
+  username: string;
+};
+
+export const authPayload = (user: AuthPayloadUser) => ({
   accessToken: "e2e-access-token",
   expiresIn: 3600,
   id: "auth-session-id",

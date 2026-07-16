@@ -167,5 +167,6 @@ enum UserStatus {
 }
 
 input VerifyEmailInput {
-  token: String!
+  code: String!
+  email: String!
 }

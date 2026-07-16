@@ -20,7 +20,7 @@ export type GraphqlMockOptions = {
   profile?: typeof profile;
   loginScenario?: "active" | "invalid" | "pending" | "suspended";
   registerScenario?: "success" | "conflict";
-  verifyToken?: "valid" | "invalid";
+  verifyCode?: "valid" | "invalid" | "rate-limited";
   resetToken?: "valid" | "invalid";
   changePasswordScenario?: "success" | "invalid";
   refreshScenario?: "active" | "invalid";
@@ -65,7 +65,7 @@ export async function installGraphqlMock(page: Page, options: GraphqlMockOptions
     profile: { ...(options.profile ?? profile) },
     loginScenario: options.loginScenario ?? "active",
     registerScenario: options.registerScenario ?? "success",
-    verifyToken: options.verifyToken ?? "valid",
+    verifyCode: options.verifyCode ?? "valid",
     resetToken: options.resetToken ?? "valid",
     changePasswordScenario: options.changePasswordScenario ?? "success",
     refreshScenario: options.refreshScenario ?? "active",
@@ -138,9 +138,12 @@ export async function installGraphqlMock(page: Page, options: GraphqlMockOptions
         }));
 
       case "VerifyEmail": {
-        const input = body.variables?.input as { token: string };
-        if (state.verifyToken === "invalid" || input.token !== "valid-verify-token") {
-          return route.fulfill(graphqlError("INVALID_VERIFICATION_TOKEN", "Invalid token"));
+        const input = body.variables?.input as { email: string; code: string };
+        if (state.verifyCode === "rate-limited") {
+          return route.fulfill(graphqlError("TOO_MANY_REQUESTS", "Too many attempts"));
+        }
+        if (state.verifyCode === "invalid" || !["123456", "012345"].includes(input.code)) {
+          return route.fulfill(graphqlError("UNAUTHENTICATED", "Invalid or expired code"));
         }
         return route.fulfill(graphqlSuccess({ verifyEmail: state.profile }));
       }

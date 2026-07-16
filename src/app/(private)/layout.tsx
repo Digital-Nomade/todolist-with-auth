@@ -3,6 +3,7 @@ import { AddTodoModal } from "@/components/organism/add-todo-modal/AddTodoModal"
 import { LayoutHeader } from "@/components/organism/layout-header/LayoutHeader";
 import { setToggleAddTodoModal } from "@/lib/features/todos/todoSlice";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
+import { storeVerificationEmail } from "@/lib/features/auth/verificationFlow";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -19,11 +20,13 @@ export default function RootLayout({children}: Readonly<{
 
   useEffect(() => {
     if (!auth.isAuthenticated) {
-      router.replace(
-        auth.user?.status === "PENDING_VERIFICATION"
-          ? `/check-email?email=${encodeURIComponent(auth.user.email)}`
-          : "/login",
-      )
+      if (auth.user?.status === "PENDING_VERIFICATION") {
+        storeVerificationEmail(auth.user.email);
+        router.replace("/check-email");
+        return;
+      }
+
+      router.replace("/login");
     }
   }, [auth.isAuthenticated, auth.user, router])
 

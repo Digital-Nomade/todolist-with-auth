@@ -20,7 +20,7 @@ test.describe("login", () => {
     await page.getByRole("button", { name: /login/i }).click();
 
     await expect(appAlert(page)).toHaveText(
-      "Unable to sign in. Check your details and try again.",
+      "The identifier or password is incorrect.",
     );
     await expect(page).toHaveURL("/login");
   });
@@ -32,8 +32,8 @@ test.describe("login", () => {
     await page.getByLabel("password").fill(credentials.pending.password);
     await page.getByRole("button", { name: /login/i }).click();
 
-    await expect(page).toHaveURL(/\/check-email\?email=pending%40example\.com/);
-    await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
+    await expect(page).toHaveURL("/check-email");
+    await expect(page.getByRole("heading", { name: "Confirm your email" })).toBeVisible();
   });
 
   test("shows a suspended account message", async ({ page }) => {
@@ -79,8 +79,9 @@ test.describe("signup", () => {
     await page.getByLabel("birthdate").fill("1990-05-15");
     await page.getByRole("button", { name: /create account/i }).click();
 
-    await expect(page).toHaveURL(/\/check-email\?email=new\.user%40example\.com/);
-    await expect(page.getByText("new.user@example.com")).toBeVisible();
+    await expect(page).toHaveURL("/check-email");
+    await expect(page.getByRole("status")).toHaveText("Check your inbox");
+    await expect(page.getByText(/n\*\*\*@example\.com/)).toBeVisible();
   });
 
   test("shows a registration error when the email is already taken", async ({ page }) => {

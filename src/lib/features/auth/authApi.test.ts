@@ -118,7 +118,10 @@ describe("authApi", () => {
       }));
     const store = makeStore();
 
-    await store.dispatch(authApi.endpoints.verifyEmail.initiate("query-token")).unwrap();
+    await store.dispatch(authApi.endpoints.verifyEmail.initiate({
+      email: "person@example.com",
+      code: "123456",
+    })).unwrap();
     await expect(store.dispatch(
       authApi.endpoints.requestPasswordReset.initiate("nobody@example.com"),
     ).unwrap()).rejects.toMatchObject({ code: "NOT_FOUND" });
@@ -127,7 +130,9 @@ describe("authApi", () => {
       token: "reset-token",
     })).unwrap();
 
-    expect(requestAt(0).body.variables).toEqual({ input: { token: "query-token" } });
+    expect(requestAt(0).body.variables).toEqual({
+      input: { email: "person@example.com", code: "123456" },
+    });
     expect(requestAt(1).body.variables).toEqual({
       input: { email: "nobody@example.com" },
     });

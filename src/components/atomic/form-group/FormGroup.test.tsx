@@ -11,7 +11,7 @@ describe("FormGroup", () => {
       </FormGroup>,
     );
 
-    expect(container.firstChild).toHaveClass("w-full", "mb-12");
+    expect(container.firstChild).toHaveClass("w-full", "last-of-type:mb-0");
     expect(screen.getByLabelText("name")).toBeInTheDocument();
   });
 });

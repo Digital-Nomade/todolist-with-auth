@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { safeAuthError } from "./authErrors";
+import { safeAuthError, verificationErrorMessage } from "./authErrors";
 
 describe("safeAuthError", () => {
   it("maps known GraphQL extension codes to safe messages", () => {
@@ -21,5 +21,23 @@ describe("safeAuthError", () => {
       { error: { code: "EMAIL_NOT_VERIFIED", errors: [], status: 403 } },
       "fallback",
     )).toBe("Verify your email before signing in.");
+  });
+
+  it("maps verification GraphQL codes to safe messages", () => {
+    expect(verificationErrorMessage({
+      code: "UNAUTHENTICATED",
+      errors: [],
+      status: 200,
+    })).toBe("Invalid or expired code.");
+    expect(verificationErrorMessage({
+      code: "TOO_MANY_REQUESTS",
+      errors: [],
+      status: 200,
+    })).toBe("Too many attempts. Please wait a moment and try again.");
+    expect(verificationErrorMessage({
+      code: "BAD_USER_INPUT",
+      errors: [],
+      status: 200,
+    })).toBe("Enter a valid email and six-digit code.");
   });
 });

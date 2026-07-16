@@ -33,7 +33,7 @@ const Input = forwardRef(({ errorMessage, label, htmlFor, type, className, ...pr
       />
       <label
         htmlFor={htmlFor}
-        className="font-extralight absolute text-2xl text-danger-light dark:text-danger-light duration-300 transform -translate-y-8 -translate-x-[-8px] scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 peer-focus:text-danger-light peer-focus:dark:text-danger-light peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-8 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto"
+        className="font-extralight absolute text-xl text-danger-light dark:text-danger-light duration-300 transform -translate-y-8 -translate-x-[-8px] scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 peer-focus:text-danger-light peer-focus:dark:text-danger-light peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-8 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto"
       >
         {label}
       </label>

@@ -82,7 +82,8 @@ export type UserStatus =
   | 'SUSPENDED';
 
 export type VerifyEmailInput = {
-  token: string;
+  code: string;
+  email: string;
 };
 
 export type AuthPayloadFieldsFragment = { accessToken: string, expiresIn: number, id: string, refreshToken: string, user: { email: string, emailVerifiedAt: string | null, id: string, status: UserStatus, username: string } };

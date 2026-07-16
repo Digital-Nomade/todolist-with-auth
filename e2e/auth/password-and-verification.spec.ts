@@ -25,54 +25,78 @@ test.describe("forgot password", () => {
   });
 });
 
-test.describe("check email", () => {
+test.describe("email confirmation code", () => {
   test.beforeEach(async ({ page }) => {
     await installGraphqlMock(page);
   });
 
-  test("shows the destination email and resends verification", async ({ page }) => {
-    await page.goto("/check-email?email=person@example.com");
+  test("shows the destination email and resends a code", async ({ page }) => {
+    await page.addInitScript(() => {
+      window.sessionStorage.setItem("todo-auth.verification-email", "person@example.com");
+      window.sessionStorage.setItem("todo-auth.verification-message", "Check your inbox");
+    });
 
-    await expect(page.getByText("person@example.com")).toBeVisible();
-    await page.getByRole("button", { name: /resend verification/i }).click();
-    await expect(page.getByRole("status")).toHaveText("A new verification email has been sent.");
-  });
-
-  test("warns when resending without an email query parameter", async ({ page }) => {
     await page.goto("/check-email");
-    await page.getByRole("button", { name: /resend verification/i }).click();
 
-    await expect(page.getByRole("status")).toHaveText(
-      "Return to registration and provide your email address.",
-    );
-  });
-});
-
-test.describe("verify email", () => {
-  test.beforeEach(async ({ page }) => {
-    await installGraphqlMock(page);
+    await expect(page.getByRole("status")).toHaveText("Check your inbox");
+    await expect(page.getByText(/p\*\*\*@example\.com/)).toBeVisible();
+    await page.getByRole("button", { name: /resend code/i }).click();
+    await expect(page.getByText(
+      "Verification email sent Any previous code is no longer valid.",
+    )).toBeVisible();
+    await expect(page.getByRole("button", { name: /resend code in/i })).toBeDisabled();
   });
 
-  test("verifies a valid token", async ({ page }) => {
-    await page.goto("/verify-email?token=valid-verify-token");
+  test("verifies a six-digit code and navigates to login", async ({ page }) => {
+    await page.addInitScript(() => {
+      window.sessionStorage.setItem("todo-auth.verification-email", "person@example.com");
+    });
 
-    await expect(page.getByRole("heading", { name: "Email verified" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Continue to login" })).toBeVisible();
+    await page.goto("/check-email");
+    await page.getByLabel("Verification code").fill("123456");
+    await page.getByRole("button", { name: /verify code/i }).click();
+
+    await expect(page).toHaveURL("/login");
+    await expect(page.evaluate(() => window.sessionStorage.getItem("todo-auth.verification-email"))).resolves.toBeNull();
   });
 
-  test("shows an invalid state and allows retry", async ({ page }) => {
-    await installGraphqlMock(page, { verifyToken: "invalid" });
-    await page.goto("/verify-email?token=bad-token");
+  test("preserves leading zeroes in the submitted code", async ({ page }) => {
+    await page.addInitScript(() => {
+      window.sessionStorage.setItem("todo-auth.verification-email", "person@example.com");
+    });
 
-    await expect(page.getByRole("heading", { name: "Invalid verification link" })).toBeVisible();
-    await page.getByRole("button", { name: /retry/i }).click();
-    await expect(page.getByRole("heading", { name: "Invalid verification link" })).toBeVisible();
+    await page.goto("/check-email");
+    await page.getByLabel("Verification code").fill("012345");
+    await page.getByRole("button", { name: /verify code/i }).click();
+
+    await expect(page).toHaveURL("/login");
   });
 
-  test("treats a missing token as invalid", async ({ page }) => {
-    await page.goto("/verify-email");
+  test("shows a safe error for invalid or expired codes", async ({ page }) => {
+    await installGraphqlMock(page, { verifyCode: "invalid" });
+    await page.addInitScript(() => {
+      window.sessionStorage.setItem("todo-auth.verification-email", "person@example.com");
+    });
 
-    await expect(page.getByRole("heading", { name: "Invalid verification link" })).toBeVisible();
+    await page.goto("/check-email");
+    await page.getByLabel("Verification code").fill("123456");
+    await page.getByRole("button", { name: /verify code/i }).click();
+
+    await expect(page.getByRole("status")).toHaveText("Invalid or expired code.");
+  });
+
+  test("offers a recovery path when the email is unavailable", async ({ page }) => {
+    await page.goto("/check-email");
+
+    await expect(page.getByRole("heading", { name: "Confirm your email" })).toBeVisible();
+    await page.getByLabel("email").fill("person@example.com");
+    await page.getByRole("button", { name: /continue/i }).click();
+    await expect(page.getByText(/p\*\*\*@example\.com/)).toBeVisible();
+  });
+
+  test("redirects legacy verify-email links to the code screen", async ({ page }) => {
+    await page.goto("/verify-email?token=legacy-token");
+    await expect(page).toHaveURL("/check-email");
   });
 });
 

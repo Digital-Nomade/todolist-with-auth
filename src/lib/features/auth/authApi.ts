@@ -23,6 +23,7 @@ import {
   type ResetPasswordInput,
   type ResetPasswordMutation,
   type UpdateProfileMutation,
+  type VerifyEmailInput,
   type VerifyEmailMutation,
 } from "@/gql/graphql";
 import { api } from "@/lib/api";
@@ -75,11 +76,11 @@ export const authApi = api.injectEndpoints({
       }),
       transformResponse: (result: CreateUserMutation) => result.createUser,
     }),
-    verifyEmail: build.mutation<VerifyEmailMutation["verifyEmail"], string>({
-      query: token => ({
+    verifyEmail: build.mutation<VerifyEmailMutation["verifyEmail"], VerifyEmailInput>({
+      query: input => ({
         auth: "public",
         document: VerifyEmailDocument,
-        variables: { input: { token } },
+        variables: { input },
       }),
       transformResponse: (result: VerifyEmailMutation) => result.verifyEmail,
     }),

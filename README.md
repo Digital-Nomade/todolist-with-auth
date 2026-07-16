@@ -207,7 +207,7 @@ npm run test:e2e
 | Signup | Success, duplicate email error |
 | Forgot password | Generic success copy, back to login |
 | Check email | Resend verification, missing email guard |
-| Verify email | Valid token, invalid token, retry, missing token |
+| Email confirmation | Code entry, resend cooldown, invalid code, recovery without email |
 | Reset password | Valid token, invalid token, missing token |
 | Route guards | Guest redirects, active-user auth redirects, refresh restore/failure |
 | Logout | Header logout |

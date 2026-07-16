@@ -59,9 +59,7 @@ describe("private layout", () => {
       </Provider>,
     );
 
-    expect(mocks.replace).toHaveBeenCalledWith(
-      "/check-email?email=person%40example.com",
-    );
+    expect(mocks.replace).toHaveBeenCalledWith("/check-email");
   });
 
   it("renders protected content for active users", () => {

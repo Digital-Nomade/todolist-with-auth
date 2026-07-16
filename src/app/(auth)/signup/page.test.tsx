@@ -27,9 +27,10 @@ describe("signup page", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    sessionStorage.clear();
   });
 
-  it("registers with form variables then navigates to check-email", async () => {
+  it("registers with form variables then navigates to code confirmation", async () => {
     mocks.createUser.mockReturnValue({
       unwrap: () => Promise.resolve({ message: "Check your inbox" }),
     });
@@ -65,8 +66,12 @@ describe("signup page", () => {
       profilePicture: null,
       username: "person",
     }));
-    expect(mocks.push).toHaveBeenCalledWith(
-      "/check-email?email=person%2Btest%40example.com",
+    expect(mocks.push).toHaveBeenCalledWith("/check-email");
+    expect(sessionStorage.getItem("todo-auth.verification-email")).toBe(
+      "person+test@example.com",
+    );
+    expect(sessionStorage.getItem("todo-auth.verification-message")).toBe(
+      "Check your inbox",
     );
   });
 });
