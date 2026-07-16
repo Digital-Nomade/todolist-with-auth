@@ -14,11 +14,12 @@
 
 html {
   height: 100%;
-  background-color: #0E003A;
+  min-height: 100vh;
 }
 
 body {
-  height: 100vh;
+  min-height: 100vh;
+  height: 100%;
   width: 100%;
 }
 

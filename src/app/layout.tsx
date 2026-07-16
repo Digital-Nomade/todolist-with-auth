@@ -14,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="h-full bg-gradient-to-br from-secondary to-primary-dark">
       <body className="h-screen bg-gradient-to-br from-secondary to-primary-dark">
         <NextUIProvider className="flex h-full min-h-0">
           <StoreProvider>
