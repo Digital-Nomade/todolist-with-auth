@@ -4,6 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import ProfilePage from "./page";
 
 const mocks = vi.hoisted(() => ({
+  disableLocalOnly: vi.fn(),
+  enableLocalOnly: vi.fn(),
+  localOnly: false,
   logoutAll: vi.fn(),
   profile: {
     birthdate: "1990-01-01T00:00:00.000Z",
@@ -37,11 +40,22 @@ vi.mock("@/lib/features/auth/authApi", () => ({
   useUserProfileQuery: () => ({ data: mocks.profile, isLoading: false }),
 }));
 
+vi.mock("@/lib/features/todos/offline/hooks", () => ({
+  useOfflineTodoSettings: () => ({
+    disableLocalOnly: mocks.disableLocalOnly,
+    enableLocalOnly: mocks.enableLocalOnly,
+    localOnly: mocks.localOnly,
+  }),
+}));
+
 describe("profile page", () => {
   afterEach(cleanup);
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.localOnly = false;
+    mocks.enableLocalOnly.mockResolvedValue(undefined);
+    mocks.disableLocalOnly.mockResolvedValue(undefined);
     mocks.updateProfile.mockReturnValue({ unwrap: () => Promise.resolve(mocks.profile) });
     mocks.logoutAll.mockReturnValue({ unwrap: () => Promise.resolve({ message: "ok" }) });
   });
@@ -69,5 +83,24 @@ describe("profile page", () => {
     fireEvent.click(screen.getByRole("button", { name: /sign out all devices/i }));
 
     await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/login"));
+  });
+
+  it("enables local-only mode from the profile switch", async () => {
+    render(createElement(ProfilePage));
+
+    fireEvent.click(screen.getByRole("switch", { name: "Local-only todos" }));
+
+    await waitFor(() => expect(mocks.enableLocalOnly).toHaveBeenCalledOnce());
+    expect(screen.getByText("Local-only mode enabled.")).toBeInTheDocument();
+  });
+
+  it("requires confirmation before disabling local-only mode", async () => {
+    mocks.localOnly = true;
+    vi.spyOn(window, "confirm").mockReturnValue(false);
+    render(createElement(ProfilePage));
+
+    fireEvent.click(screen.getByRole("switch", { name: "Local-only todos" }));
+
+    expect(mocks.disableLocalOnly).not.toHaveBeenCalled();
   });
 });

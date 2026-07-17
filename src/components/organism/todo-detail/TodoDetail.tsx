@@ -4,10 +4,8 @@ import { Button } from "@/components/atomic/button/Button";
 import {
   CheckIcon
 } from "@/components/icons";
-import {
-  isTodoUnavailableError,
-  useUpdateTodoMutation,
-} from "@/lib/features/todos/todoApi";
+import { useOfflineTodoMutations } from "@/lib/features/todos/offline/hooks";
+import { isTodoUnavailableError } from "@/lib/features/todos/todoApi";
 import { PaginatedTodo, Todo } from "@/types/Todo.type";
 import { format } from "date-fns";
 import { useAnimate } from "framer-motion";
@@ -31,7 +29,7 @@ export function TodoDetail({ paginatedTodos, selectedTodo, onSelectTodo, tIndex 
   const [todoTitle, animateTodoTitle] = useAnimate<HTMLHeadingElement>()
   const [nextButtonScope, animateNextButton] = useAnimate<HTMLDivElement>()
   const [previousButtonScope, animatePreviousButton] = useAnimate<HTMLDivElement>()
-  const [updateTodo] = useUpdateTodoMutation()
+  const { deleteTodo, updateTodo } = useOfflineTodoMutations()
 
   useEffect(() => {
     if (tIndex !== undefined) {
@@ -233,7 +231,7 @@ export function TodoDetail({ paginatedTodos, selectedTodo, onSelectTodo, tIndex 
   }
 
   async function handleCheckTodo() {
-    if (!currentTodo) {
+    if (!currentTodo || !updateTodo) {
       return
     }
 
@@ -241,20 +239,23 @@ export function TodoDetail({ paginatedTodos, selectedTodo, onSelectTodo, tIndex 
     titleAnimation()
 
     try {
-      const updatedTodo = await updateTodo({
-        id: currentTodo.id,
-        input: { done: !currentTodo.done },
-      }).unwrap()
-      setCurrentTodo(updatedTodo)
+      const done = !currentTodo.done
+      await updateTodo(currentTodo.id, { done })
+      setCurrentTodo({ ...currentTodo, done })
     } catch (error) {
       if (isTodoUnavailableError(error)) {
         setCurrentTodo(undefined)
         setIsUnavailable(true)
         return
       }
-
       // Keep the current todo visible for retryable failures.
     }
+  }
+
+  async function handleDeleteTodo() {
+    if (!currentTodo || !deleteTodo) return
+    await deleteTodo(currentTodo.id)
+    setCurrentTodo(undefined)
   }
 
   if (isUnavailable) {
@@ -304,7 +305,17 @@ export function TodoDetail({ paginatedTodos, selectedTodo, onSelectTodo, tIndex 
           }
         </div>
       </div>
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-4">
+        <Button
+          rounded={false}
+          variant="outlined"
+          buttonType="danger"
+          className="max-w-[200px]"
+          type="button"
+          onClick={handleDeleteTodo}
+        >
+          delete
+        </Button>
         <Button
           rounded={false}
           variant="outlined"

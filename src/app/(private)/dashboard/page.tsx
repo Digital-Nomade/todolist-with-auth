@@ -2,12 +2,12 @@
 
 import { TodosList } from "@/components/feats/dashboard/todos-list/TodosList"
 import { TodoDetail } from "@/components/organism"
-import { useListTodosQuery } from "@/lib/features/todos/todoApi"
+import { useOfflineTodos } from "@/lib/features/todos/offline/hooks"
 import { Todo } from "@/types/Todo.type"
 import { useEffect, useState } from "react"
 
 export default function Dashboard() {
-  const { data: todosData, isError, isLoading } = useListTodosQuery()
+  const { data: todosData, error, isLoading } = useOfflineTodos()
   const [todos, setTodos] = useState<Todo[]>([])
   const [selectedTodo, setSelectedTodo] = useState<Todo>()
   const [todoIndex, setTodoIndex] = useState(0)
@@ -33,7 +33,7 @@ export default function Dashboard() {
     return <main className="p-8">Loading todos…</main>
   }
 
-  if (isError) {
+  if (error && !todosData.data.length) {
     return <main className="p-8">Unable to load todos.</main>
   }
 

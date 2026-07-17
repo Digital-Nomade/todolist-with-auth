@@ -1,19 +1,19 @@
 "use client"
 
 import { TodoDetail } from "@/components/organism/todo-detail/TodoDetail";
-import { useListTodosQuery } from "@/lib/features/todos/todoApi";
+import { useOfflineTodos } from "@/lib/features/todos/offline/hooks";
 import { Todo } from "@/types/Todo.type";
 import { useState } from "react";
 
 export default function HomePage() {
-  const { data: todosData, isError, isLoading } = useListTodosQuery()
+  const { data: todosData, error, isLoading } = useOfflineTodos()
   const [selectedTodo, setSelectedTodo] = useState<Todo>()
 
   if (isLoading) {
     return <main className='p-8'>Loading todos…</main>
   }
 
-  if (isError) {
+  if (error && !todosData.data.length) {
     return <main className='p-8'>Unable to load todos.</main>
   }
 

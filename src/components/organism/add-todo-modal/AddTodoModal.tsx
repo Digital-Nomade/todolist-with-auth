@@ -1,5 +1,5 @@
 import { Button, FormGroup, Input } from "@/components/atomic"
-import { useCreateTodoMutation } from "@/lib/features/todos/todoApi"
+import { useOfflineTodoMutations } from "@/lib/features/todos/offline/hooks"
 import { useAppSelector } from "@/lib/hooks"
 import { DatePicker } from "@nextui-org/react"
 import { isBefore } from "date-fns"
@@ -31,7 +31,7 @@ export function AddTodoModal({ handleToggleModal, isOpen }: Props) {
     }
   } = useForm<Inputs>()
   const { toggleAddTodoModal } = useAppSelector(state => state.todo)
-  const [createTodo] = useCreateTodoMutation()
+  const { createTodo } = useOfflineTodoMutations()
   const [scope, animate] = useAnimate()
   const [scopeWrapper, animateWrapper] = useAnimate()
 
@@ -76,12 +76,13 @@ export function AddTodoModal({ handleToggleModal, isOpen }: Props) {
   if (!isOpen) return null
 
   async function onSubmit(data: Inputs) {
+    if (!createTodo) return
     try {
       await createTodo({
         ...data,
         dueTo: data.dueTo?.toISOString() ?? null,
         reminderOn: data.reminderOn?.toISOString() ?? null,
-      }).unwrap()
+      })
       await handleCloseModal()
       reset()
     } catch {
@@ -172,6 +173,7 @@ export function AddTodoModal({ handleToggleModal, isOpen }: Props) {
             Description
           </label>
           <textarea
+            id="description"
             className="
               outline-danger-light
               border-b-danger-light

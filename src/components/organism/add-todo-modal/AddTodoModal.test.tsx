@@ -19,8 +19,8 @@ vi.mock("@nextui-org/react", () => ({
   DatePicker: ({ label }: { label: string }) => <div>{label}</div>,
 }));
 
-vi.mock("@/lib/features/todos/todoApi", () => ({
-  useCreateTodoMutation: () => [mocks.createTodo],
+vi.mock("@/lib/features/todos/offline/hooks", () => ({
+  useOfflineTodoMutations: () => ({ createTodo: mocks.createTodo }),
 }));
 
 describe("AddTodoModal", () => {
@@ -28,7 +28,7 @@ describe("AddTodoModal", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.createTodo.mockReturnValue({ unwrap: () => Promise.resolve({ id: "todo-id" }) });
+    mocks.createTodo.mockResolvedValue("todo-id");
   });
 
   it("does not render when closed", () => {

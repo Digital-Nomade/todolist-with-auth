@@ -28,26 +28,29 @@ vi.mock("@/components/organism", () => ({
 }));
 
 const mocks = vi.hoisted(() => ({
-  useListTodosQuery: vi.fn(),
+  useOfflineTodos: vi.fn(),
 }));
 
-vi.mock("@/lib/features/todos/todoApi", () => ({
-  useListTodosQuery: () => mocks.useListTodosQuery(),
+vi.mock("@/lib/features/todos/offline/hooks", () => ({
+  useOfflineTodos: () => mocks.useOfflineTodos(),
 }));
 
 describe("dashboard page", () => {
   afterEach(cleanup);
 
   it("shows a loading state", () => {
-    mocks.useListTodosQuery.mockReturnValue({ isLoading: true });
+    mocks.useOfflineTodos.mockReturnValue({
+      data: { data: [] },
+      isLoading: true,
+    });
     render(<DashboardPage />);
     expect(screen.getByText("Loading todos…")).toBeInTheDocument();
   });
 
   it("renders the todo list and detail panel", () => {
-    mocks.useListTodosQuery.mockReturnValue({
+    mocks.useOfflineTodos.mockReturnValue({
       data: { data: sampleTodos, first: 1, last: 3, limit: 10, total: 3 },
-      isError: false,
+      error: null,
       isLoading: false,
     });
     render(<DashboardPage />);
@@ -57,9 +60,9 @@ describe("dashboard page", () => {
   });
 
   it("updates the selected todo when a list item is clicked", () => {
-    mocks.useListTodosQuery.mockReturnValue({
+    mocks.useOfflineTodos.mockReturnValue({
       data: { data: sampleTodos, first: 1, last: 3, limit: 10, total: 3 },
-      isError: false,
+      error: null,
       isLoading: false,
     });
     render(<DashboardPage />);
