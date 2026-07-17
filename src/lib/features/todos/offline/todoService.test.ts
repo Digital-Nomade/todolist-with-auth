@@ -1,9 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { makeStore } from "@/lib/store";
 import type { Todo } from "@/types/Todo.type";
+import { computeMigrationChecksum } from "./migration";
 import { readOfflineStore } from "./repository";
 import type { TodoRemoteClient } from "./remote";
 import { createTodoService } from "./todoService";
+
+vi.mock("./migration", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./migration")>();
+  return {
+    ...actual,
+    computeMigrationChecksum: vi.fn(actual.computeMigrationChecksum),
+  };
+});
 
 const serverTodo: Todo = {
   createdAt: "2026-07-01T00:00:00.000Z",
@@ -18,9 +27,22 @@ const serverTodo: Todo = {
 
 function remote(): TodoRemoteClient {
   return {
+    cancelLocalOnlyMigration: vi.fn().mockResolvedValue(undefined),
+    commitLocalOnlyMigration: vi.fn().mockResolvedValue({
+      committedAt: "2026-07-01T00:00:01.000Z",
+      deletedCount: 1,
+      migrationId: "migration-1",
+    }),
     create: vi.fn().mockResolvedValue(serverTodo),
     delete: vi.fn().mockResolvedValue(undefined),
     listAll: vi.fn().mockResolvedValue([serverTodo]),
+    prepareLocalOnlyMigration: vi.fn().mockResolvedValue({
+      checksum: "abc123",
+      expiresAt: "2026-07-02T00:00:00.000Z",
+      migrationId: "migration-1",
+      todoCount: 1,
+      todos: [serverTodo],
+    }),
     update: vi.fn().mockResolvedValue(serverTodo),
   };
 }
@@ -35,11 +57,13 @@ function setOnline(value: boolean) {
 describe("offline todo service", () => {
   beforeEach(() => {
     localStorage.clear();
+    const randomUUID = vi.fn()
+      .mockReturnValueOnce("local-id")
+      .mockReturnValueOnce("operation-id")
+      .mockReturnValueOnce("idempotency-key");
     vi.stubGlobal("crypto", {
-      randomUUID: vi.fn()
-        .mockReturnValueOnce("local-id")
-        .mockReturnValueOnce("operation-id")
-        .mockReturnValueOnce("idempotency-key"),
+      ...globalThis.crypto,
+      randomUUID,
     });
   });
 
@@ -120,6 +144,14 @@ describe("offline todo service", () => {
   it("keeps local-only writes off the network and queue", async () => {
     setOnline(true);
     const client = remote();
+    vi.mocked(computeMigrationChecksum).mockResolvedValue("abc123");
+    vi.mocked(client.prepareLocalOnlyMigration).mockResolvedValue({
+      checksum: "abc123",
+      expiresAt: "2026-07-02T00:00:00.000Z",
+      migrationId: "migration-1",
+      todoCount: 1,
+      todos: [serverTodo],
+    });
     const store = makeStore();
     const service = createTodoService("user-1", store.dispatch, client);
 
@@ -127,10 +159,67 @@ describe("offline todo service", () => {
     await service.create({ description: "Device", title: "Local" });
     const persisted = await readOfflineStore("user-1");
 
+    expect(client.prepareLocalOnlyMigration).toHaveBeenCalledOnce();
+    expect(client.commitLocalOnlyMigration).toHaveBeenCalledWith("migration-1");
     expect(client.create).not.toHaveBeenCalled();
     expect(persisted.localOnly).toBe(true);
+    expect(persisted.baselineSnapshot).toEqual([]);
     expect(persisted.queue).toEqual([]);
-    expect(persisted.todos[0].syncStatus).toBe("local_only");
+    expect(persisted.todos[0]).toMatchObject({
+      serverId: null,
+      syncStatus: "local_only",
+    });
+  });
+
+  it("resumes a prepared migration commit after reload", async () => {
+    setOnline(true);
+    const client = remote();
+    const store = makeStore();
+    const service = createTodoService("user-1", store.dispatch, client);
+    const snapshot = [{
+      createdAt: serverTodo.createdAt,
+      description: serverTodo.description,
+      done: serverTodo.done,
+      dueTo: serverTodo.dueTo,
+      localId: serverTodo.id,
+      reminderOn: serverTodo.reminderOn,
+      serverId: serverTodo.id,
+      syncStatus: "synced" as const,
+      title: serverTodo.title,
+      updatedAt: serverTodo.updatedAt,
+    }];
+
+    localStorage.setItem(
+      "offline.todos.v1:user-1",
+      JSON.stringify({
+        baselineSnapshot: null,
+        lastSyncAt: null,
+        localOnly: false,
+        migrationJournal: {
+          checksum: "ignored",
+          committedAt: null,
+          expiresAt: "2099-01-01T00:00:00.000Z",
+          migrationId: "migration-1",
+          preparedAt: "2026-07-01T00:00:00.000Z",
+          snapshot,
+          status: "prepared",
+          todoCount: 1,
+        },
+        queue: [],
+        todos: [],
+        userId: "user-1",
+        version: 2,
+      }),
+    );
+
+    await service.initialize();
+
+    expect(client.commitLocalOnlyMigration).toHaveBeenCalledWith("migration-1");
+    await expect(readOfflineStore("user-1")).resolves.toMatchObject({
+      localOnly: true,
+      migrationJournal: null,
+      todos: [{ serverId: null, syncStatus: "local_only" }],
+    });
   });
 
   it("does not enable local-only mode while cloud changes are pending", async () => {
@@ -144,6 +233,6 @@ describe("offline todo service", () => {
     await expect(service.enableLocalOnly()).rejects.toThrow(
       "Wait for pending todo changes to sync",
     );
-    expect(client.listAll).not.toHaveBeenCalled();
+    expect(client.prepareLocalOnlyMigration).not.toHaveBeenCalled();
   });
 });

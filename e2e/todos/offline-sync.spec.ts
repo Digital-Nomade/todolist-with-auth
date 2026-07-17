@@ -66,9 +66,13 @@ test.describe("offline todo sync", () => {
     await loginAsActiveUser(page);
     await page.goto("/profile");
 
+    page.once("dialog", dialog => dialog.accept());
     const localOnlySwitch = page.getByRole("switch", { name: "Local-only todos" });
     await localOnlySwitch.click();
     await expect(localOnlySwitch).toBeChecked();
+    await expect.poll(() => mock.migrationCalls.prepare).toBe(1);
+    await expect.poll(() => mock.migrationCalls.commit).toBe(1);
+    expect(mock.todos).toHaveLength(0);
 
     await page.goto("/home");
     await createTodo(page, "Device-only todo");
@@ -79,8 +83,21 @@ test.describe("offline todo sync", () => {
     page.once("dialog", dialog => dialog.accept());
     await page.getByRole("switch", { name: "Local-only todos" }).click();
 
-    await expect.poll(() => mock.idempotencyKeys.length).toBe(1);
+    await expect.poll(() => mock.idempotencyKeys.length).toBeGreaterThan(0);
     await expect(page.getByRole("switch", { name: "Local-only todos" })).not.toBeChecked();
+  });
+
+  test("does not enable local-only mode when the destructive confirm is cancelled", async ({ page }) => {
+    const mock = await installGraphqlMock(page);
+    await loginAsActiveUser(page);
+    await page.goto("/profile");
+
+    page.once("dialog", dialog => dialog.dismiss());
+    await page.getByRole("switch", { name: "Local-only todos" }).click();
+
+    await expect(page.getByRole("switch", { name: "Local-only todos" })).not.toBeChecked();
+    expect(mock.migrationCalls.prepare).toBe(0);
+    expect(mock.todos.length).toBeGreaterThan(0);
   });
 
   test("removes a todo offline and queues its server deletion", async ({ page, context }) => {
@@ -108,6 +125,7 @@ test.describe("offline todo sync", () => {
         baselineSnapshot: null,
         lastSyncAt: null,
         localOnly: true,
+        migrationJournal: null,
         queue: [],
         todos: [{
           createdAt: "2026-07-01T00:00:00.000Z",
@@ -122,7 +140,7 @@ test.describe("offline todo sync", () => {
           updatedAt: "2026-07-01T00:00:00.000Z",
         }],
         userId,
-        version: 1,
+        version: 2,
       });
       localStorage.setItem(
         "offline.todos.v1:6fffb4d8-ae0a-42bc-8154-80a118b36644",

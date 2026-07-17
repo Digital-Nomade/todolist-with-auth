@@ -24,7 +24,7 @@ describe("offline todo repository", () => {
       queue: [],
       todos: [],
       userId: "user-a",
-      version: 1,
+      version: 2,
     });
   });
 

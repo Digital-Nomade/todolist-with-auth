@@ -9,6 +9,10 @@ import {
   suspendedUser,
   type TodoRecord,
 } from "./test-data";
+import {
+  createMockMigration,
+  type MockMigrationState,
+} from "./local-only-migration";
 
 type GraphqlBody = {
   query: string;
@@ -71,6 +75,13 @@ export async function installGraphqlMock(page: Page, options: GraphqlMockOptions
     refreshScenario: options.refreshScenario ?? "active",
     idempotencyKeys: [] as string[],
     idempotentCreates: new Map<string, TodoRecord>(),
+    activeMigration: null as MockMigrationState | null,
+    committedMigrations: new Map<string, { committedAt: string; deletedCount: number }>(),
+    migrationCalls: {
+      cancel: 0,
+      commit: 0,
+      prepare: 0,
+    },
   };
 
   await page.route("**/graphql", async (route: Route) => {
@@ -178,6 +189,12 @@ export async function installGraphqlMock(page: Page, options: GraphqlMockOptions
         return route.fulfill(graphqlSuccess({ todos: paginatedTodos(state.todos) }));
 
       case "CreateTodo": {
+        if (state.activeMigration) {
+          return route.fulfill(graphqlError(
+            "MIGRATION_IN_PROGRESS",
+            "Finish or cancel the local-only migration before changing todos.",
+          ));
+        }
         const idempotencyKey = request.headers()["idempotency-key"];
         if (idempotencyKey) state.idempotencyKeys.push(idempotencyKey);
         const existing = idempotencyKey
@@ -208,12 +225,24 @@ export async function installGraphqlMock(page: Page, options: GraphqlMockOptions
       }
 
       case "DeleteTodo": {
+        if (state.activeMigration) {
+          return route.fulfill(graphqlError(
+            "MIGRATION_IN_PROGRESS",
+            "Finish or cancel the local-only migration before changing todos.",
+          ));
+        }
         const id = body.variables?.id as string;
         state.todos = state.todos.filter(todo => todo.id !== id);
         return route.fulfill(graphqlSuccess({ deleteTodo: true }));
       }
 
       case "UpdateTodo": {
+        if (state.activeMigration) {
+          return route.fulfill(graphqlError(
+            "MIGRATION_IN_PROGRESS",
+            "Finish or cancel the local-only migration before changing todos.",
+          ));
+        }
         const id = body.variables?.id as string;
         const input = body.variables?.input as Partial<TodoRecord>;
         const index = state.todos.findIndex(todo => todo.id === id);
@@ -226,6 +255,63 @@ export async function installGraphqlMock(page: Page, options: GraphqlMockOptions
           updatedAt: new Date().toISOString(),
         };
         return route.fulfill(graphqlSuccess({ updateTodo: state.todos[index] }));
+      }
+
+      case "PrepareTodoLocalOnlyMigration": {
+        state.migrationCalls.prepare += 1;
+        state.activeMigration = createMockMigration(state.todos);
+        const migration = state.activeMigration;
+        return route.fulfill(graphqlSuccess({
+          prepareTodoLocalOnlyMigration: {
+            checksum: migration.checksum,
+            expiresAt: migration.expiresAt,
+            migrationId: migration.migrationId,
+            todoCount: migration.todos.length,
+            todos: migration.todos,
+          },
+        }));
+      }
+
+      case "CommitTodoLocalOnlyMigration": {
+        state.migrationCalls.commit += 1;
+        const migrationId = body.variables?.migrationId as string;
+        const existing = state.committedMigrations.get(migrationId);
+        if (existing) {
+          return route.fulfill(graphqlSuccess({
+            commitTodoLocalOnlyMigration: {
+              committedAt: existing.committedAt,
+              deletedCount: existing.deletedCount,
+              migrationId,
+            },
+          }));
+        }
+        if (!state.activeMigration || state.activeMigration.migrationId !== migrationId) {
+          return route.fulfill(graphqlError("MIGRATION_NOT_FOUND", "Migration not found"));
+        }
+        const deletedCount = state.activeMigration.todos.length;
+        const snapshotIds = new Set(state.activeMigration.todos.map(todo => todo.id));
+        state.todos = state.todos.filter(todo => !snapshotIds.has(todo.id));
+        const committedAt = new Date().toISOString();
+        state.committedMigrations.set(migrationId, { committedAt, deletedCount });
+        state.activeMigration = null;
+        return route.fulfill(graphqlSuccess({
+          commitTodoLocalOnlyMigration: {
+            committedAt,
+            deletedCount,
+            migrationId,
+          },
+        }));
+      }
+
+      case "CancelTodoLocalOnlyMigration": {
+        state.migrationCalls.cancel += 1;
+        const migrationId = body.variables?.migrationId as string;
+        if (state.activeMigration?.migrationId === migrationId) {
+          state.activeMigration = null;
+        }
+        return route.fulfill(graphqlSuccess({
+          cancelTodoLocalOnlyMigration: { message: "Migration cancelled" },
+        }));
       }
 
       default:

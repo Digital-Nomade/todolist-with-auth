@@ -325,8 +325,9 @@ npm run typecheck
 
 Todo CRUD is offline-first for authenticated users. The browser stores one
 versioned todo store per account under `offline.todos.v1:<user-id>` in
-`localStorage`. This includes the local mirror, pending operation queue,
-local-only preference, and the baseline used when leaving local-only mode.
+`localStorage`. Store version `2` adds a migration journal for destructive
+local-only activation. The persisted store includes the local mirror, pending
+operation queue, local-only preference, and migration recovery state.
 
 - Offline creates, updates, and deletes are visible immediately and survive reloads.
 - Pending operations sync while the tab is open on reconnect, authenticated startup,
@@ -335,11 +336,19 @@ local-only preference, and the baseline used when leaving local-only mode.
   this header to prevent duplicate creates.
 - Queue replay is FIFO after compaction; the last local write wins.
 - Profile edits remain server-only.
-- Profile → **Local-only todos** downloads every server todo before enabling. While
-  enabled, todo operations never call GraphQL. Turning it off requires confirmation
-  and uploads the derived local changes.
+- Profile → **Local-only todos** runs a two-phase backend migration:
+  `prepareTodoLocalOnlyMigration` downloads an immutable snapshot,
+  the client persists it locally, then `commitTodoLocalOnlyMigration` permanently
+  deletes the user's server todos. Enabling requires a destructive confirmation.
+  While enabled, todo operations never call GraphQL. Turning it off requires
+  confirmation and uploads device todos as new server records.
 - Offline stores are account-scoped and retained on logout; the in-memory Redux and
   RTK Query state is reset so another account cannot see them.
+
+Handoff documents:
+
+- Backend implementation: [`BACKEND_LOCAL_ONLY_MIGRATION.md`](BACKEND_LOCAL_ONLY_MIGRATION.md)
+- Mobile implementation: [`MOBILE_LOCAL_ONLY_MIGRATION.md`](MOBILE_LOCAL_ONLY_MIGRATION.md)
 
 The implementation intentionally uses browser `localStorage`, not IndexedDB,
 Service Workers, or Background Sync. Data is plaintext and subject to the

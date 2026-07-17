@@ -33,19 +33,23 @@ describe("todo sync engine", () => {
       baselineSnapshot: null,
       lastSyncAt: null,
       localOnly: false,
+      migrationJournal: null,
       queue: [operation],
       todos: [local],
       userId: "user-1",
-      version: 1,
+      version: 2,
     });
     let resolveCreate!: (todo: Todo) => void;
     const createPromise = new Promise<Todo>(resolve => {
       resolveCreate = resolve;
     });
     const remote: TodoRemoteClient = {
+      cancelLocalOnlyMigration: vi.fn(),
+      commitLocalOnlyMigration: vi.fn(),
       create: vi.fn(() => createPromise),
       delete: vi.fn(),
       listAll: vi.fn(),
+      prepareLocalOnlyMigration: vi.fn(),
       update: vi.fn(),
     };
     const store = makeStore();
@@ -81,18 +85,22 @@ describe("todo sync engine", () => {
       baselineSnapshot: null,
       lastSyncAt: null,
       localOnly: false,
+      migrationJournal: null,
       queue: [operation],
       todos: [local],
       userId: "user-1",
-      version: 1,
+      version: 2,
     });
     let resolveCreate!: (todo: Todo) => void;
     const remote: TodoRemoteClient = {
+      cancelLocalOnlyMigration: vi.fn(),
+      commitLocalOnlyMigration: vi.fn(),
       create: vi.fn(() => new Promise<Todo>(resolve => {
         resolveCreate = resolve;
       })),
       delete: vi.fn(),
       listAll: vi.fn(),
+      prepareLocalOnlyMigration: vi.fn(),
       update: vi.fn((_id, input) => Promise.resolve({
         ...local,
         ...input,
