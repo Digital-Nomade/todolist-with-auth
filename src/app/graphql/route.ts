@@ -24,9 +24,14 @@ export async function POST(request: NextRequest) {
     "content-type": request.headers.get("content-type") ?? "application/json",
   });
   const authorization = request.headers.get("authorization");
+  const idempotencyKey = request.headers.get("idempotency-key");
 
   if (authorization) {
     headers.set("authorization", authorization);
+  }
+
+  if (idempotencyKey) {
+    headers.set("idempotency-key", idempotencyKey);
   }
 
   try {

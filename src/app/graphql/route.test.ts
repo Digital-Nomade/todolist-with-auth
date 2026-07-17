@@ -50,13 +50,17 @@ describe("graphql route", () => {
 
     const response = await POST(createNextRequest({
       body: JSON.stringify({ query: "{ me { id } }" }),
-      headers: { authorization: "Bearer access-token" },
+      headers: {
+        authorization: "Bearer access-token",
+        "idempotency-key": "stable-create-key",
+      },
     }));
 
     expect(response.status).toBe(200);
     expect(fetchMock).toHaveBeenCalledOnce();
     const forwardedHeaders = fetchMock.mock.calls[0][1].headers as Headers;
     expect(forwardedHeaders.get("authorization")).toBe("Bearer access-token");
+    expect(forwardedHeaders.get("idempotency-key")).toBe("stable-create-key");
   });
 
   it("returns a proxy-unavailable error when the backend is down", async () => {

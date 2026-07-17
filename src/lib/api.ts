@@ -21,6 +21,7 @@ type AuthMode = "protected" | "public" | "refresh";
 export interface GraphqlRequest {
   auth?: AuthMode;
   document: TypedDocumentNode<object, never>;
+  idempotencyKey?: string;
   variables?: object;
 }
 
@@ -76,6 +77,10 @@ async function execute<Data>(
 
   if (token) {
     headers.set("authorization", `Bearer ${token}`);
+  }
+
+  if (request.idempotencyKey) {
+    headers.set("idempotency-key", request.idempotencyKey);
   }
 
   let response: Response;

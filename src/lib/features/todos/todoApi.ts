@@ -28,6 +28,11 @@ type GraphqlTodo =
   | UpdateTodoMutation["updateTodo"]
   | TodosQuery["todos"]["data"][number];
 
+export interface CreateTodoRequest {
+  idempotencyKey?: string;
+  input: AddTodo;
+}
+
 function toTodo(todo: GraphqlTodo): Todo {
   return {
     ...todo,
@@ -58,13 +63,18 @@ export function isTodoUnavailableError(
 export const todoApi = api.injectEndpoints({
   overrideExisting: true,
   endpoints: build => ({
-    createTodo: build.mutation<Todo, AddTodo>({
-      query: input => ({
-        document: CreateTodoDocument,
-        variables: {
-          input: input satisfies CreateTodoMutationVariables["input"],
-        },
-      }),
+    createTodo: build.mutation<Todo, AddTodo | CreateTodoRequest>({
+      query: request => {
+        const hasRequestMetadata = "input" in request;
+        const input = hasRequestMetadata ? request.input : request;
+        return {
+          document: CreateTodoDocument,
+          idempotencyKey: hasRequestMetadata ? request.idempotencyKey : undefined,
+          variables: {
+            input: input satisfies CreateTodoMutationVariables["input"],
+          },
+        };
+      },
       transformResponse: (response: CreateTodoMutation) =>
         toTodo(response.createTodo),
       invalidatesTags: result =>

@@ -247,11 +247,15 @@ describe("graphqlBaseQuery", () => {
     expect(typeof first.data[0].id).toBe("string");
 
     await store.dispatch(todoApi.endpoints.createTodo.initiate({
-      description: todo.description,
-      title: todo.title,
+      idempotencyKey: "stable-create-key",
+      input: {
+        description: todo.description,
+        title: todo.title,
+      },
     })).unwrap();
 
     await vi.waitFor(() => expect(listRequests).toBe(2));
+    expect(requestAt(1).headers.get("idempotency-key")).toBe("stable-create-key");
     list.unsubscribe();
   });
 });

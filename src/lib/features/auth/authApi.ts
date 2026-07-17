@@ -28,6 +28,7 @@ import {
 } from "@/gql/graphql";
 import { api } from "@/lib/api";
 import { clearSession, getRefreshToken, setSession } from "@/lib/auth/session";
+import { cancelAllTodoSync } from "@/lib/features/todos/offline/syncEngine";
 import { sessionCleared, sessionRestored } from "./authSlice";
 import type { LoginAccountPayload } from "./authTypes";
 
@@ -149,6 +150,7 @@ export const authApi = api.injectEndpoints({
       async onQueryStarted(_argument, { dispatch, queryFulfilled }) {
         try {
           await queryFulfilled;
+          cancelAllTodoSync();
           clearSession();
           dispatch(sessionCleared());
           dispatch(api.util.resetApiState());
@@ -169,6 +171,7 @@ export const authApi = api.injectEndpoints({
         } catch {
           // Local logout must complete even if the server is unavailable.
         } finally {
+          cancelAllTodoSync();
           clearSession();
           dispatch(sessionCleared());
           dispatch(api.util.resetApiState());
@@ -184,6 +187,7 @@ export const authApi = api.injectEndpoints({
         } catch {
           // Local logout must complete even if the server is unavailable.
         } finally {
+          cancelAllTodoSync();
           clearSession();
           dispatch(sessionCleared());
           dispatch(api.util.resetApiState());
