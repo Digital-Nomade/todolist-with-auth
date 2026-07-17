@@ -11,13 +11,26 @@ function storageAvailable() {
 function isStore(value: unknown, userId: string): value is UserOfflineStore {
   if (!value || typeof value !== "object") return false;
   const store = value as Partial<UserOfflineStore>;
-  return store.version === 1
+  const version = store.version ?? 1;
+  return (version === 1 || version === 2)
     && store.userId === userId
     && typeof store.localOnly === "boolean"
     && Array.isArray(store.todos)
     && Array.isArray(store.queue)
     && (store.baselineSnapshot === null || Array.isArray(store.baselineSnapshot))
-    && (store.lastSyncAt === null || typeof store.lastSyncAt === "string");
+    && (store.lastSyncAt === null || typeof store.lastSyncAt === "string")
+    && (store.migrationJournal === undefined
+      || store.migrationJournal === null
+      || typeof store.migrationJournal === "object");
+}
+
+function normalizeStore(store: UserOfflineStore): UserOfflineStore {
+  return {
+    ...store,
+    migrationJournal: store.migrationJournal ?? null,
+    queue: compactQueue(store.queue),
+    version: 2,
+  };
 }
 
 function readUnserialized(userId: string): UserOfflineStore {
@@ -29,7 +42,7 @@ function readUnserialized(userId: string): UserOfflineStore {
   try {
     const parsed: unknown = JSON.parse(raw);
     return isStore(parsed, userId)
-      ? { ...parsed, queue: compactQueue(parsed.queue) }
+      ? normalizeStore(parsed)
       : createEmptyStore(userId);
   } catch {
     return createEmptyStore(userId);
@@ -74,9 +87,10 @@ export async function updateOfflineStore(
     const next = update(readUnserialized(userId));
     const normalized = {
       ...next,
+      migrationJournal: next.migrationJournal ?? null,
       queue: compactQueue(next.queue),
       userId,
-      version: 1 as const,
+      version: 2 as const,
     };
     writeUnserialized(normalized);
     return normalized;

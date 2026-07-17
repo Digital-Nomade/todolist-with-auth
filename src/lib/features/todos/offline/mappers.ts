@@ -19,10 +19,11 @@ export function createEmptyStore(userId: string): UserOfflineStore {
     baselineSnapshot: null,
     lastSyncAt: null,
     localOnly: false,
+    migrationJournal: null,
     queue: [],
     todos: [],
     userId,
-    version: 1,
+    version: 2,
   };
 }
 

@@ -1,12 +1,18 @@
 import {
+  CancelTodoLocalOnlyMigrationDocument,
+  CommitTodoLocalOnlyMigrationDocument,
   CreateTodoDocument,
   DeleteTodoDocument,
+  PrepareTodoLocalOnlyMigrationDocument,
   TodoDocument,
   TodosDocument,
   UpdateTodoDocument,
+  type CancelTodoLocalOnlyMigrationMutation,
+  type CommitTodoLocalOnlyMigrationMutation,
   type CreateTodoMutation,
   type CreateTodoMutationVariables,
   type DeleteTodoMutation,
+  type PrepareTodoLocalOnlyMigrationMutation,
   type TodoQuery,
   type TodosQueryVariables,
   type TodosQuery,
@@ -31,6 +37,20 @@ type GraphqlTodo =
 export interface CreateTodoRequest {
   idempotencyKey?: string;
   input: AddTodo;
+}
+
+export interface TodoLocalOnlyMigration {
+  checksum: string;
+  expiresAt: string;
+  migrationId: string;
+  todoCount: number;
+  todos: Todo[];
+}
+
+export interface TodoLocalOnlyMigrationCommit {
+  committedAt: string;
+  deletedCount: number;
+  migrationId: string;
 }
 
 function toTodo(todo: GraphqlTodo): Todo {
@@ -146,6 +166,35 @@ export const todoApi = api.injectEndpoints({
             { type: "todos", id: "LIST" },
           ]
         : [],
+    }),
+    prepareTodoLocalOnlyMigration: build.mutation<TodoLocalOnlyMigration, void>({
+      query: () => ({
+        document: PrepareTodoLocalOnlyMigrationDocument,
+      }),
+      transformResponse: (response: PrepareTodoLocalOnlyMigrationMutation) => ({
+        ...response.prepareTodoLocalOnlyMigration,
+        todos: response.prepareTodoLocalOnlyMigration.todos.map(toTodo),
+      }),
+    }),
+    commitTodoLocalOnlyMigration: build.mutation<
+      TodoLocalOnlyMigrationCommit,
+      string
+    >({
+      query: migrationId => ({
+        document: CommitTodoLocalOnlyMigrationDocument,
+        variables: { migrationId },
+      }),
+      transformResponse: (response: CommitTodoLocalOnlyMigrationMutation) =>
+        response.commitTodoLocalOnlyMigration,
+      invalidatesTags: [{ type: "todos", id: "LIST" }],
+    }),
+    cancelTodoLocalOnlyMigration: build.mutation<string, string>({
+      query: migrationId => ({
+        document: CancelTodoLocalOnlyMigrationDocument,
+        variables: { migrationId },
+      }),
+      transformResponse: (response: CancelTodoLocalOnlyMigrationMutation) =>
+        response.cancelTodoLocalOnlyMigration.message,
     }),
   }),
 });

@@ -55,13 +55,16 @@ type MessagePayload {
 }
 
 type Mutation {
+  cancelTodoLocalOnlyMigration(migrationId: ID!): MessagePayload!
   changePassword(input: ChangePasswordInput!): TodoUser!
+  commitTodoLocalOnlyMigration(migrationId: ID!): TodoLocalOnlyMigrationCommit!
   createTodo(input: CreateTodo!): Todo!
   createUser(input: CreateUserDTO!): RegisterPayload!
   deleteTodo(id: ID!): Boolean!
   login(input: LoginInput!): AuthPayload!
   logout(refreshToken: String!): MessagePayload!
   logoutAll: MessagePayload!
+  prepareTodoLocalOnlyMigration: TodoLocalOnlyMigration!
   refreshToken(input: RefreshTokenInput!): AuthPayload!
   requestPasswordReset(input: RequestPasswordResetInput!): MessagePayload!
   resendVerificationEmail(input: ResendVerificationInput!): MessagePayload!
@@ -115,6 +118,20 @@ type Todo {
   reminderOn: DateTime
   title: String!
   updatedAt: DateTime!
+}
+
+type TodoLocalOnlyMigration {
+  checksum: String!
+  expiresAt: DateTime!
+  migrationId: ID!
+  todoCount: Int!
+  todos: [Todo!]!
+}
+
+type TodoLocalOnlyMigrationCommit {
+  committedAt: DateTime!
+  deletedCount: Int!
+  migrationId: ID!
 }
 
 enum TodoOrder {

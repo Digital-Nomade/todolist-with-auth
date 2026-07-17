@@ -35,14 +35,28 @@ export type QueuedOperation =
   | QueuedDeleteOperation
   | QueuedUpdateOperation;
 
+export type MigrationJournalStatus = "committing" | "prepared";
+
+export interface LocalOnlyMigrationJournal {
+  checksum: string;
+  committedAt: string | null;
+  expiresAt: string;
+  migrationId: string;
+  preparedAt: string | null;
+  snapshot: LocalTodoRecord[];
+  status: MigrationJournalStatus;
+  todoCount: number;
+}
+
 export interface UserOfflineStore {
   baselineSnapshot: LocalTodoRecord[] | null;
   lastSyncAt: string | null;
   localOnly: boolean;
+  migrationJournal: LocalOnlyMigrationJournal | null;
   queue: QueuedOperation[];
   todos: LocalTodoRecord[];
   userId: string;
-  version: 1;
+  version: 2;
 }
 
 export interface OfflineTodosState {

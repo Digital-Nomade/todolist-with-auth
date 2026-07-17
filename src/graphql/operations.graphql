@@ -142,3 +142,29 @@ mutation UpdateTodo($id: ID!, $input: UpdateTodo!) {
 mutation DeleteTodo($id: ID!) {
   deleteTodo(id: $id)
 }
+
+mutation PrepareTodoLocalOnlyMigration {
+  prepareTodoLocalOnlyMigration {
+    checksum
+    expiresAt
+    migrationId
+    todoCount
+    todos {
+      ...TodoFields
+    }
+  }
+}
+
+mutation CommitTodoLocalOnlyMigration($migrationId: ID!) {
+  commitTodoLocalOnlyMigration(migrationId: $migrationId) {
+    committedAt
+    deletedCount
+    migrationId
+  }
+}
+
+mutation CancelTodoLocalOnlyMigration($migrationId: ID!) {
+  cancelTodoLocalOnlyMigration(migrationId: $migrationId) {
+    message
+  }
+}

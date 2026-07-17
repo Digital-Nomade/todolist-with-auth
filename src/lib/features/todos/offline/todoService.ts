@@ -9,11 +9,18 @@ import {
   localCreate,
   updateOperation,
 } from "./mappers";
+import {
+  computeMigrationChecksum,
+  createPreparedJournal,
+  finalizeLocalOnlyStore,
+  hasPendingMigrationCommit,
+  migrationTodosToLocal,
+} from "./migration";
 import { offlineStoreHydrated } from "./offlineSlice";
 import { readOfflineStore, updateOfflineStore } from "./repository";
 import type { TodoRemoteClient } from "./remote";
 import { runTodoSync } from "./syncEngine";
-import type { LocalTodoRecord, UserOfflineStore } from "./types";
+import type { LocalOnlyMigrationJournal, LocalTodoRecord, UserOfflineStore } from "./types";
 
 function online() {
   return typeof navigator === "undefined" || navigator.onLine;
@@ -74,6 +81,44 @@ async function persist(
   return store;
 }
 
+async function commitPreparedMigration(
+  userId: string,
+  dispatch: AppDispatch,
+  remote: TodoRemoteClient,
+  journal: LocalOnlyMigrationJournal,
+) {
+  await persist(userId, dispatch, current => ({
+    ...current,
+    migrationJournal: {
+      ...journal,
+      status: "committing",
+    },
+  }));
+
+  await remote.commitLocalOnlyMigration(journal.migrationId);
+
+  return persist(userId, dispatch, current =>
+    finalizeLocalOnlyStore(current, journal.snapshot));
+}
+
+async function resumePendingMigration(
+  userId: string,
+  dispatch: AppDispatch,
+  remote: TodoRemoteClient,
+  store: UserOfflineStore,
+) {
+  const journal = store.migrationJournal;
+  if (!journal || !hasPendingMigrationCommit(journal)) return store;
+  if (Date.parse(journal.expiresAt) <= Date.now()) {
+    await remote.cancelLocalOnlyMigration(journal.migrationId).catch(() => undefined);
+    return persist(userId, dispatch, current => ({
+      ...current,
+      migrationJournal: null,
+    }));
+  }
+  return commitPreparedMigration(userId, dispatch, remote, journal);
+}
+
 export function createTodoService(
   userId: string,
   dispatch: AppDispatch,
@@ -87,6 +132,12 @@ export function createTodoService(
     async initialize() {
       const stored = await readOfflineStore(userId);
       dispatch(offlineStoreHydrated(stored));
+
+      if (hasPendingMigrationCommit(stored.migrationJournal) && online()) {
+        await resumePendingMigration(userId, dispatch, remote, stored);
+        return;
+      }
+
       if (!stored.localOnly && online()) {
         const fetchStartedAt = Date.now();
         try {
@@ -239,20 +290,36 @@ export function createTodoService(
           "Wait for pending todo changes to sync before enabling local-only mode.",
         );
       }
-      const serverTodos = await remote.listAll();
-      return persist(userId, dispatch, current => {
-        const todos = mirrorServerTodos(current, serverTodos).todos.map(todo => ({
-          ...todo,
-          syncStatus: "local_only" as const,
-        }));
-        return {
+      if (hasPendingMigrationCommit(currentStore.migrationJournal)) {
+        return resumePendingMigration(userId, dispatch, remote, currentStore);
+      }
+
+      let preparedMigrationId: string | null = null;
+      let journalPersisted = false;
+
+      try {
+        const prepared = await remote.prepareLocalOnlyMigration();
+        preparedMigrationId = prepared.migrationId;
+        const checksum = await computeMigrationChecksum(prepared.todos);
+        if (checksum !== prepared.checksum) {
+          throw new Error("Migration snapshot checksum mismatch.");
+        }
+
+        const snapshot = migrationTodosToLocal(prepared.todos);
+        const journal = createPreparedJournal(prepared, snapshot);
+        await persist(userId, dispatch, current => ({
           ...current,
-          baselineSnapshot: todos.map(todo => ({ ...todo })),
-          localOnly: true,
-          queue: [],
-          todos,
-        };
-      });
+          migrationJournal: journal,
+        }));
+        journalPersisted = true;
+
+        return commitPreparedMigration(userId, dispatch, remote, journal);
+      } catch (error) {
+        if (preparedMigrationId && !journalPersisted) {
+          await remote.cancelLocalOnlyMigration(preparedMigrationId).catch(() => undefined);
+        }
+        throw error;
+      }
     },
 
     async disableLocalOnly() {
