@@ -8,14 +8,18 @@ import { LandingLink } from "@/components/atomic/landing-link/LandingLink";
 import { LoadingIcon } from "@/components/icons";
 import { useLoginUserMutation } from "@/lib/features/auth/authApi";
 import {
-  isUnverifiedLoginError,
+  isEmailNotVerifiedError,
+  isForbiddenError,
   loginErrorMessage,
 } from "@/lib/features/auth/authErrors";
 import {
   beginEmailVerificationFlow,
   LOGIN_VERIFICATION_MESSAGE,
 } from "@/lib/features/auth/verificationNavigation";
-import { resolveVerificationEmailFromLogin } from "@/lib/features/auth/verificationFlow";
+import {
+  emailFromLoginIdentifier,
+  resolveVerificationEmailFromLogin,
+} from "@/lib/features/auth/verificationFlow";
 import { useAppDispatch } from "@/lib/hooks";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
@@ -57,7 +61,23 @@ export default function LoginPage() {
         setSubmitError("This account is suspended. Contact support for help.")
       }
     } catch (error) {
-      if (isUnverifiedLoginError(error)) {
+      if (isForbiddenError(error)) {
+        const email = emailFromLoginIdentifier(data.identifier);
+
+        if (email) {
+          beginEmailVerificationFlow(dispatch, {
+            email,
+            message: LOGIN_VERIFICATION_MESSAGE,
+          });
+          router.replace("/check-email");
+          return;
+        }
+
+        setSubmitError(loginErrorMessage(error));
+        return;
+      }
+
+      if (isEmailNotVerifiedError(error)) {
         const email = resolveVerificationEmailFromLogin(data.identifier, error);
 
         if (email) {

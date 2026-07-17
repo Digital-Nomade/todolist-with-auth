@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: mocks.replace, push: vi.fn() }),
+  usePathname: () => "/login",
 }));
 
 vi.mock("framer-motion", () => ({
@@ -54,7 +55,7 @@ describe("auth layout", () => {
       username: "person",
     } as never));
 
-    const { container } = render(
+    const { getByText } = render(
       <Provider store={store}>
         <AuthLayout>
           <p>Login form</p>
@@ -63,7 +64,7 @@ describe("auth layout", () => {
     );
 
     expect(mocks.replace).toHaveBeenCalledWith("/check-email");
-    expect(container).toBeEmptyDOMElement();
+    expect(getByText("Login form")).toBeInTheDocument();
   });
 
   it("renders children for guests", () => {
