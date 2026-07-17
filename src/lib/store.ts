@@ -2,12 +2,14 @@ import { combineReducers, configureStore } from "@reduxjs/toolkit"
 import { api } from "./api"
 
 import authReducer from "./features/auth/authSlice"
+import verificationFlowReducer from "./features/auth/verificationFlowSlice"
 import notificationReducer from "./features/notifications/notificationsSlice"
 import offlineTodosReducer from "./features/todos/offline/offlineSlice"
 import todoReducer from "./features/todos/todoSlice"
 
 const rootReducer = combineReducers({
   auth: authReducer,
+  verificationFlow: verificationFlowReducer,
   offlineTodos: offlineTodosReducer,
   todo: todoReducer,
   notification: notificationReducer,

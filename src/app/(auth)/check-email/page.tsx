@@ -2,7 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Button, FormGroup, Input } from "@/components/atomic";
 import { VerificationCodeInput } from "@/components/atomic/verification-code-input/VerificationCodeInput";
 import {
@@ -10,6 +10,7 @@ import {
   useVerifyEmailMutation,
 } from "@/lib/features/auth/authApi";
 import { getErrorCode, safeAuthError, verificationErrorMessage } from "@/lib/features/auth/authErrors";
+import { verificationFlowCleared } from "@/lib/features/auth/verificationFlowSlice";
 import {
   clearVerificationFlowState,
   getRemainingResendCooldownMs,
@@ -22,15 +23,19 @@ import {
   storeVerificationEmail,
   VERIFICATION_RESEND_COOLDOWN_MS,
 } from "@/lib/features/auth/verificationFlow";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 
-type ViewState = "confirm" | "recover-email";
+type ViewState = "confirm" | "recover-email" | "success";
 
 function formatCooldown(ms: number) {
   return Math.ceil(ms / 1000);
 }
 
-function readVerificationState(queryEmail: string | null) {
-  const resolvedEmail = resolveVerificationEmail(queryEmail);
+function readVerificationState(
+  queryEmail: string | null,
+  inMemoryEmail: string | null,
+) {
+  const resolvedEmail = resolveVerificationEmail(queryEmail, inMemoryEmail);
 
   return {
     email: resolvedEmail,
@@ -40,10 +45,11 @@ function readVerificationState(queryEmail: string | null) {
 }
 
 function CheckEmailContent() {
-  const router = useRouter();
+  const dispatch = useAppDispatch();
+  const inMemoryEmail = useAppSelector(state => state.verificationFlow.email);
   const searchParams = useSearchParams();
   const queryEmail = searchParams.get("email");
-  const initialState = readVerificationState(queryEmail);
+  const initialState = readVerificationState(queryEmail, inMemoryEmail);
   const [email, setEmail] = useState(initialState.email);
   const [recoveryEmail, setRecoveryEmail] = useState("");
   const [code, setCode] = useState("");
@@ -59,11 +65,13 @@ function CheckEmailContent() {
   const [resend, { isLoading: isResending }] = useResendVerificationMutation();
 
   useEffect(() => {
-    const nextState = readVerificationState(queryEmail);
+    if (viewState === "success") return;
+
+    const nextState = readVerificationState(queryEmail, inMemoryEmail);
     setEmail(nextState.email);
     setRegistrationMessage(nextState.registrationMessage);
     setViewState(nextState.viewState);
-  }, [queryEmail]);
+  }, [inMemoryEmail, queryEmail, viewState]);
 
   useEffect(() => {
     if (!email) return;
@@ -102,7 +110,9 @@ function CheckEmailContent() {
     try {
       await verify({ email, code }).unwrap();
       clearVerificationFlowState();
-      router.replace("/login");
+      dispatch(verificationFlowCleared());
+      setStatusMessage("Your email has been confirmed. You can now sign in.");
+      setViewState("success");
     } catch (error) {
       const message = verificationErrorMessage(error);
       setStatusMessage(message);
@@ -117,7 +127,7 @@ function CheckEmailContent() {
         setVerifyBlockedUntil(Date.now() + VERIFICATION_RESEND_COOLDOWN_MS);
       }
     }
-  }, [code, email, router, verify]);
+  }, [code, dispatch, email, verify]);
 
   async function handleResend() {
     if (!email) {
@@ -157,6 +167,18 @@ function CheckEmailContent() {
     setEmail(normalized);
     setViewState("confirm");
     setStatusMessage("");
+  }
+
+  if (viewState === "success") {
+    return (
+      <main className="m-auto max-w-lg border border-danger-light p-8 text-danger-light">
+        <h1 className="mb-4 text-center text-4xl font-bold">Email confirmed</h1>
+        {statusMessage && <p role="status" className="mb-6 text-center">{statusMessage}</p>}
+        <Link href="/login" className="block text-center underline">
+          Go to login
+        </Link>
+      </main>
+    );
   }
 
   if (viewState === "recover-email") {

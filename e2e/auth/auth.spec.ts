@@ -20,7 +20,7 @@ test.describe("login", () => {
     await page.getByRole("button", { name: /login/i }).click();
 
     await expect(appAlert(page)).toHaveText(
-      "The identifier or password is incorrect.",
+      "Invalid credentials. Please try again.",
     );
     await expect(page).toHaveURL("/login");
   });
@@ -34,6 +34,32 @@ test.describe("login", () => {
 
     await expect(page).toHaveURL("/check-email");
     await expect(page.getByRole("heading", { name: "Confirm your email" })).toBeVisible();
+  });
+
+  test("redirects forbidden email logins to check-email", async ({ page }) => {
+    await installGraphqlMock(page, { loginScenario: "forbidden-unverified" });
+    await page.goto("/login");
+    await page.getByLabel("email or username").fill("pending@example.com");
+    await page.getByLabel("password").fill(credentials.pending.password);
+    await page.getByRole("button", { name: /login/i }).click();
+
+    await expect(page).toHaveURL("/check-email");
+    await expect(page.getByRole("heading", { name: "Confirm your email" })).toBeVisible();
+    await expect(page.getByText(/p\*\*\*@example\.com/)).toBeVisible();
+    await expect(page.getByRole("status")).toHaveText("Confirm your email to sign in.");
+  });
+
+  test("shows a forbidden message for unverified username logins", async ({ page }) => {
+    await installGraphqlMock(page, { loginScenario: "forbidden-unverified" });
+    await page.goto("/login");
+    await page.getByLabel("email or username").fill(credentials.pending.identifier);
+    await page.getByLabel("password").fill(credentials.pending.password);
+    await page.getByRole("button", { name: /login/i }).click();
+
+    await expect(page).toHaveURL("/login");
+    await expect(appAlert(page)).toHaveText(
+      "This account is not available. Verify your email or contact support.",
+    );
   });
 
   test("shows a suspended account message", async ({ page }) => {

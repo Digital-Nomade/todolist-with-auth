@@ -1,16 +1,25 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { makeStore } from "@/lib/store";
+import {
+  beginEmailVerificationFlow,
+  LOGIN_VERIFICATION_MESSAGE,
+} from "./verificationNavigation";
 import {
   clearVerificationFlowState,
+  emailFromLoginIdentifier,
   getRemainingResendCooldownMs,
   getVerificationEmail,
   getVerificationMessage,
+  identifierLooksLikeEmail,
   isValidVerificationCode,
   maskEmail,
   normalizeVerificationCode,
   resolveVerificationEmail,
+  resolveVerificationEmailFromLogin,
   setResendCooldown,
   storeVerificationEmail,
   storeVerificationMessage,
+  VERIFICATION_FLOW_KEY,
   VERIFICATION_RESEND_COOLDOWN_MS,
 } from "./verificationFlow";
 
@@ -63,5 +72,43 @@ describe("verificationFlow", () => {
     const keys = Object.keys(sessionStorage);
     expect(keys.some(key => key.includes("code"))).toBe(false);
     expect(VERIFICATION_RESEND_COOLDOWN_MS).toBeGreaterThan(0);
+  });
+
+  it("detects email identifiers for login redirect decisions", () => {
+    expect(identifierLooksLikeEmail("User@Example.com ")).toBe(true);
+    expect(emailFromLoginIdentifier("User@Example.com ")).toBe("user@example.com");
+    expect(emailFromLoginIdentifier("myusername")).toBeNull();
+  });
+
+  it("resolves verification email from login attempts", () => {
+    expect(resolveVerificationEmailFromLogin("pending@example.com")).toBe(
+      "pending@example.com",
+    );
+    expect(resolveVerificationEmailFromLogin("pending", {
+      errors: [{
+        extensions: {
+          code: "FORBIDDEN",
+          email: "pending@example.com",
+        },
+      }],
+    })).toBe("pending@example.com");
+    expect(resolveVerificationEmailFromLogin("pending")).toBe("");
+  });
+
+  it("persists verification flow snapshots in session storage", () => {
+    const store = makeStore();
+    beginEmailVerificationFlow(store.dispatch, {
+      email: "pending@example.com",
+      message: LOGIN_VERIFICATION_MESSAGE,
+    });
+
+    const raw = sessionStorage.getItem(VERIFICATION_FLOW_KEY);
+    expect(raw).toBeTruthy();
+    expect(JSON.parse(raw!)).toEqual({
+      email: "pending@example.com",
+      message: LOGIN_VERIFICATION_MESSAGE,
+      resendAvailableAt: null,
+    });
+    expect(store.getState().verificationFlow.email).toBe("pending@example.com");
   });
 });

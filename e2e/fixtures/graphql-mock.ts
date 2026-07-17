@@ -22,7 +22,7 @@ type GraphqlBody = {
 export type GraphqlMockOptions = {
   todos?: TodoRecord[];
   profile?: typeof profile;
-  loginScenario?: "active" | "invalid" | "pending" | "suspended";
+  loginScenario?: "active" | "email-not-verified" | "forbidden-unverified" | "invalid" | "pending" | "suspended";
   registerScenario?: "success" | "conflict";
   verifyCode?: "valid" | "invalid" | "rate-limited";
   resetToken?: "valid" | "invalid";
@@ -43,12 +43,17 @@ function graphqlSuccess(data: Record<string, unknown>) {
   };
 }
 
-function graphqlError(code: string, message: string, status = 200) {
+function graphqlError(
+  code: string,
+  message: string,
+  status = 200,
+  extensions: Record<string, unknown> = {},
+) {
   return {
     status,
     contentType: "application/json",
     body: JSON.stringify({
-      errors: [{ extensions: { code }, message }],
+      errors: [{ extensions: { code, ...extensions }, message }],
     }),
   };
 }
@@ -99,7 +104,21 @@ export async function installGraphqlMock(page: Page, options: GraphqlMockOptions
         ) {
           return route.fulfill(graphqlError("INVALID_CREDENTIALS", "Invalid credentials"));
         }
-        if (input.identifier === credentials.pending.identifier) {
+        if (
+          input.identifier === credentials.pending.identifier
+          || input.identifier === pendingUser.email
+        ) {
+          if (
+            state.loginScenario === "email-not-verified"
+            || state.loginScenario === "forbidden-unverified"
+          ) {
+            return route.fulfill(graphqlError(
+              "FORBIDDEN",
+              "Email verification required",
+              200,
+              { email: pendingUser.email },
+            ));
+          }
           return route.fulfill(graphqlSuccess({ login: authPayload(pendingUser) }));
         }
         if (input.identifier === credentials.suspended.identifier) {

@@ -1,7 +1,10 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { createElement } from "react";
+import { Provider } from "react-redux";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import SignUp from "./page";
+import { VERIFICATION_FLOW_KEY } from "@/lib/features/auth/verificationFlow";
+import { makeStore } from "@/lib/store";
 
 const mocks = vi.hoisted(() => ({
   createUser: vi.fn(),
@@ -34,7 +37,11 @@ describe("signup page", () => {
     mocks.createUser.mockReturnValue({
       unwrap: () => Promise.resolve({ message: "Check your inbox" }),
     });
-    render(createElement(SignUp));
+    render(
+      <Provider store={makeStore()}>
+        {createElement(SignUp)}
+      </Provider>,
+    );
 
     fireEvent.change(screen.getByLabelText("email"), {
       target: { value: "person+test@example.com" },
@@ -67,11 +74,8 @@ describe("signup page", () => {
       username: "person",
     }));
     expect(mocks.push).toHaveBeenCalledWith("/check-email");
-    expect(sessionStorage.getItem("todo-auth.verification-email")).toBe(
-      "person+test@example.com",
-    );
-    expect(sessionStorage.getItem("todo-auth.verification-message")).toBe(
-      "Check your inbox",
-    );
+    const snapshot = JSON.parse(sessionStorage.getItem(VERIFICATION_FLOW_KEY)!);
+    expect(snapshot.email).toBe("person+test@example.com");
+    expect(snapshot.message).toBe("Check your inbox");
   });
 });

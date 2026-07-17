@@ -4,7 +4,7 @@ import { TodoSyncStatusBanner } from "@/components/feats/todo-sync-status-banner
 import { LayoutHeader } from "@/components/organism/layout-header/LayoutHeader";
 import { setToggleAddTodoModal } from "@/lib/features/todos/todoSlice";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
-import { storeVerificationEmail } from "@/lib/features/auth/verificationFlow";
+import { beginEmailVerificationFlow, LOGIN_VERIFICATION_MESSAGE } from "@/lib/features/auth/verificationNavigation";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -22,14 +22,17 @@ export default function RootLayout({children}: Readonly<{
   useEffect(() => {
     if (!auth.isAuthenticated) {
       if (auth.user?.status === "PENDING_VERIFICATION") {
-        storeVerificationEmail(auth.user.email);
+        beginEmailVerificationFlow(dispatch, {
+          email: auth.user.email,
+          message: LOGIN_VERIFICATION_MESSAGE,
+        });
         router.replace("/check-email");
         return;
       }
 
       router.replace("/login");
     }
-  }, [auth.isAuthenticated, auth.user, router])
+  }, [auth.isAuthenticated, auth.user, dispatch, router])
 
   if (!auth.isAuthenticated || auth.user?.status !== "ACTIVE") return null
 

@@ -4,10 +4,8 @@ import { Button, FormGroup, Input } from "@/components/atomic";
 import { LoadingIcon } from "@/components/icons";
 import { useRegisterUserMutation } from "@/lib/features/auth/authApi";
 import { safeAuthError } from "@/lib/features/auth/authErrors";
-import {
-  storeVerificationEmail,
-  storeVerificationMessage,
-} from "@/lib/features/auth/verificationFlow";
+import { beginEmailVerificationFlow } from "@/lib/features/auth/verificationNavigation";
+import { useAppDispatch } from "@/lib/hooks";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -29,6 +27,7 @@ export default function SignUp() {
   const [createUser, { isLoading }] = useRegisterUserMutation();
   const [submitError, setSubmitError] = useState("");
   const router = useRouter();
+  const dispatch = useAppDispatch();
 
   async function onSubmit({ confirmPassword: _confirm, ...input }: Inputs) {
     void _confirm;
@@ -41,8 +40,10 @@ export default function SignUp() {
         birthdate: new Date(`${input.birthdate}T00:00:00.000Z`).toISOString(),
         profilePicture: input.profilePicture || null,
       }).unwrap();
-      storeVerificationEmail(input.email);
-      storeVerificationMessage(result.message);
+      beginEmailVerificationFlow(dispatch, {
+        email: input.email,
+        message: result.message,
+      });
       router.push("/check-email");
     } catch (error) {
       setSubmitError(safeAuthError(error, "Unable to create the account. Review your details and try again."));

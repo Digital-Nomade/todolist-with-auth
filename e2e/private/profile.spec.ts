@@ -57,7 +57,7 @@ test.describe("change password", () => {
     await page.getByRole("button", { name: /change password/i }).click();
 
     await expect(appAlert(page)).toHaveText(
-      "The identifier or password is incorrect.",
+      "Invalid credentials. Please try again.",
     );
     await expect(page).toHaveURL("/change-password");
   });

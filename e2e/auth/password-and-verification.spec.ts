@@ -56,8 +56,10 @@ test.describe("email confirmation code", () => {
     await page.getByLabel("Verification code").fill("123456");
     await page.getByRole("button", { name: /verify code/i }).click();
 
+    await expect(page.getByRole("heading", { name: "Email confirmed" })).toBeVisible();
+    await page.getByRole("link", { name: "Go to login" }).click();
     await expect(page).toHaveURL("/login");
-    await expect(page.evaluate(() => window.sessionStorage.getItem("todo-auth.verification-email"))).resolves.toBeNull();
+    await expect(page.evaluate(() => window.sessionStorage.getItem("email-verification-flow"))).resolves.toBeNull();
   });
 
   test("preserves leading zeroes in the submitted code", async ({ page }) => {
@@ -69,6 +71,8 @@ test.describe("email confirmation code", () => {
     await page.getByLabel("Verification code").fill("012345");
     await page.getByRole("button", { name: /verify code/i }).click();
 
+    await expect(page.getByRole("heading", { name: "Email confirmed" })).toBeVisible();
+    await page.getByRole("link", { name: "Go to login" }).click();
     await expect(page).toHaveURL("/login");
   });
 

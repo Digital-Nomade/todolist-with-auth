@@ -45,6 +45,27 @@ describe("auth layout", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it("redirects pending verification users to check-email", () => {
+    const store = makeStore();
+    store.dispatch(sessionRestored({
+      email: "person@example.com",
+      id: "6fffb4d8-ae0a-42bc-8154-80a118b36644",
+      status: "PENDING_VERIFICATION",
+      username: "person",
+    } as never));
+
+    const { container } = render(
+      <Provider store={store}>
+        <AuthLayout>
+          <p>Login form</p>
+        </AuthLayout>
+      </Provider>,
+    );
+
+    expect(mocks.replace).toHaveBeenCalledWith("/check-email");
+    expect(container).toBeEmptyDOMElement();
+  });
+
   it("renders children for guests", () => {
     const store = makeStore();
     const { getByText } = render(

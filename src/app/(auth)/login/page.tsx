@@ -7,8 +7,16 @@ import {
 import { LandingLink } from "@/components/atomic/landing-link/LandingLink";
 import { LoadingIcon } from "@/components/icons";
 import { useLoginUserMutation } from "@/lib/features/auth/authApi";
-import { safeAuthError } from "@/lib/features/auth/authErrors";
-import { storeVerificationEmail } from "@/lib/features/auth/verificationFlow";
+import {
+  isUnverifiedLoginError,
+  loginErrorMessage,
+} from "@/lib/features/auth/authErrors";
+import {
+  beginEmailVerificationFlow,
+  LOGIN_VERIFICATION_MESSAGE,
+} from "@/lib/features/auth/verificationNavigation";
+import { resolveVerificationEmailFromLogin } from "@/lib/features/auth/verificationFlow";
+import { useAppDispatch } from "@/lib/hooks";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -24,7 +32,6 @@ export default function LoginPage() {
     const {
     register,
     handleSubmit,
-    // watch,
     formState: {
       errors,
     }
@@ -32,6 +39,7 @@ export default function LoginPage() {
   const [login, { isLoading }] = useLoginUserMutation()
   const [submitError, setSubmitError] = useState("")
   const router = useRouter()
+  const dispatch = useAppDispatch()
 
   async function onSubmit(data: Inputs) {
     setSubmitError("")
@@ -40,13 +48,32 @@ export default function LoginPage() {
       if (result.user.status === "ACTIVE") {
         router.replace("/home")
       } else if (result.user.status === "PENDING_VERIFICATION") {
-        storeVerificationEmail(result.user.email);
+        beginEmailVerificationFlow(dispatch, {
+          email: result.user.email,
+          message: LOGIN_VERIFICATION_MESSAGE,
+        });
         router.replace("/check-email");
       } else {
         setSubmitError("This account is suspended. Contact support for help.")
       }
-    } catch(error) {
-      setSubmitError(safeAuthError(error, "Unable to sign in. Check your details and try again."))
+    } catch (error) {
+      if (isUnverifiedLoginError(error)) {
+        const email = resolveVerificationEmailFromLogin(data.identifier, error);
+
+        if (email) {
+          beginEmailVerificationFlow(dispatch, {
+            email,
+            message: LOGIN_VERIFICATION_MESSAGE,
+          });
+          router.replace("/check-email");
+          return;
+        }
+
+        setSubmitError(loginErrorMessage(error));
+        return;
+      }
+
+      setSubmitError(loginErrorMessage(error))
     }
   }
 
