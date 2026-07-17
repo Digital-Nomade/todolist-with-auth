@@ -66,6 +66,17 @@ export default function ProfilePage() {
   async function handleLocalOnlyChange() {
     if (isChangingLocalOnly) return;
     if (
+      !localOnly
+      && !window.confirm(
+        "Enable local-only mode?\n\n"
+        + "This device will download all todos from your account, then permanently delete them from the server. "
+        + "Your todos will only exist on this device until you turn local-only off and upload them again.\n\n"
+        + "This action cannot be undone.",
+      )
+    ) {
+      return;
+    }
+    if (
       localOnly
       && !window.confirm(
         "Turn off local-only mode and upload local todo changes to your account?",
@@ -82,7 +93,7 @@ export default function ProfilePage() {
         setMessage("Local-only mode disabled. Todo changes will sync in the background.");
       } else {
         await enableLocalOnly?.();
-        setMessage("Local-only mode enabled.");
+        setMessage("Local-only mode enabled. Server todos were removed from your account.");
       }
     } catch (error) {
       setMessage(
@@ -108,8 +119,8 @@ export default function ProfilePage() {
           <div>
             <h2 className="text-xl font-bold">Local-only todos</h2>
             <p className="mt-2 font-light">
-              Keep todo changes on this device. Existing server todos are not deleted.
-              Turning this off uploads your local changes after confirmation.
+              Download every todo from your account to this device, then permanently delete the server copy.
+              Turning this off uploads your local todos as new server records after confirmation.
             </p>
           </div>
           <label className="flex items-center gap-3">

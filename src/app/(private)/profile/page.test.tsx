@@ -86,12 +86,22 @@ describe("profile page", () => {
   });
 
   it("enables local-only mode from the profile switch", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
     render(createElement(ProfilePage));
 
     fireEvent.click(screen.getByRole("switch", { name: "Local-only todos" }));
 
     await waitFor(() => expect(mocks.enableLocalOnly).toHaveBeenCalledOnce());
-    expect(screen.getByText("Local-only mode enabled.")).toBeInTheDocument();
+    expect(screen.getByText(/Server todos were removed/i)).toBeInTheDocument();
+  });
+
+  it("requires confirmation before enabling local-only mode", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(false);
+    render(createElement(ProfilePage));
+
+    fireEvent.click(screen.getByRole("switch", { name: "Local-only todos" }));
+
+    expect(mocks.enableLocalOnly).not.toHaveBeenCalled();
   });
 
   it("requires confirmation before disabling local-only mode", async () => {
