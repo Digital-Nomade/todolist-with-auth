@@ -1,5 +1,4 @@
 import { cleanup, screen, waitFor } from "@testing-library/react";
-import { createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthBootstrap } from "./AuthBootstrap";
 import { renderWithProviders } from "@/test/renderWithProviders";
@@ -27,7 +26,7 @@ describe("AuthBootstrap", () => {
     mocks.refreshSessionOnce.mockReturnValue(new Promise(() => undefined));
 
     renderWithProviders(
-      createElement(AuthBootstrap, {}, createElement("p", null, "App content")),
+      <AuthBootstrap><p>App content</p></AuthBootstrap>,
     );
 
     expect(screen.getByText("Restoring your session…")).toBeInTheDocument();
@@ -38,7 +37,7 @@ describe("AuthBootstrap", () => {
     mocks.refreshSessionOnce.mockResolvedValue(null);
 
     renderWithProviders(
-      createElement(AuthBootstrap, {}, createElement("p", null, "App content")),
+      <AuthBootstrap><p>App content</p></AuthBootstrap>,
     );
 
     expect(await screen.findByText("App content")).toBeInTheDocument();
@@ -58,7 +57,7 @@ describe("AuthBootstrap", () => {
     });
 
     const { store } = renderWithProviders(
-      createElement(AuthBootstrap, {}, createElement("p", null, "App content")),
+      <AuthBootstrap><p>App content</p></AuthBootstrap>,
     );
 
     await waitFor(() => {

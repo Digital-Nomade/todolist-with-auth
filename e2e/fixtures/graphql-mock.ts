@@ -69,6 +69,8 @@ export async function installGraphqlMock(page: Page, options: GraphqlMockOptions
     resetToken: options.resetToken ?? "valid",
     changePasswordScenario: options.changePasswordScenario ?? "success",
     refreshScenario: options.refreshScenario ?? "active",
+    idempotencyKeys: [] as string[],
+    idempotentCreates: new Map<string, TodoRecord>(),
   };
 
   await page.route("**/graphql", async (route: Route) => {
@@ -176,6 +178,14 @@ export async function installGraphqlMock(page: Page, options: GraphqlMockOptions
         return route.fulfill(graphqlSuccess({ todos: paginatedTodos(state.todos) }));
 
       case "CreateTodo": {
+        const idempotencyKey = request.headers()["idempotency-key"];
+        if (idempotencyKey) state.idempotencyKeys.push(idempotencyKey);
+        const existing = idempotencyKey
+          ? state.idempotentCreates.get(idempotencyKey)
+          : undefined;
+        if (existing) {
+          return route.fulfill(graphqlSuccess({ createTodo: existing }));
+        }
         const input = body.variables?.input as {
           title: string;
           description: string;
@@ -192,8 +202,15 @@ export async function installGraphqlMock(page: Page, options: GraphqlMockOptions
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
+        if (idempotencyKey) state.idempotentCreates.set(idempotencyKey, created);
         state.todos = [created, ...state.todos];
         return route.fulfill(graphqlSuccess({ createTodo: created }));
+      }
+
+      case "DeleteTodo": {
+        const id = body.variables?.id as string;
+        state.todos = state.todos.filter(todo => todo.id !== id);
+        return route.fulfill(graphqlSuccess({ deleteTodo: true }));
       }
 
       case "UpdateTodo": {

@@ -3,6 +3,7 @@ import { useAnimate } from "framer-motion";
 import { describe, expect, it, vi } from "vitest";
 import { DetailHeader } from "./DetailHeader";
 import type { Todo } from "@/types/Todo.type";
+import type { TodoNavigationDirection } from "../../types/TodoDetail.types";
 
 const todos: Todo[] = [
   {
@@ -32,7 +33,7 @@ function DetailHeaderHarness({
   onNavigate = vi.fn(),
 }: {
   todoIndex?: number;
-  onNavigate?: ReturnType<typeof vi.fn>;
+  onNavigate?: (direction: TodoNavigationDirection) => void;
 }) {
   const [todoTitle] = useAnimate<HTMLHeadingElement>();
   const [previousButtonScope] = useAnimate<HTMLDivElement>();
