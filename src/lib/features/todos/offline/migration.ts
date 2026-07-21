@@ -73,3 +73,25 @@ export function createPreparedJournal(
 export function hasPendingMigrationCommit(journal: LocalOnlyMigrationJournal | null) {
   return journal?.status === "prepared" || journal?.status === "committing";
 }
+
+export function getMigrationErrorCode(error: unknown) {
+  const apiError = error as {
+    code?: string;
+    data?: { code?: string };
+    error?: { code?: string };
+    errors?: Array<{ extensions?: { code?: string } }>;
+  };
+
+  return apiError.code
+    ?? apiError.data?.code
+    ?? apiError.error?.code
+    ?? apiError.errors?.[0]?.extensions?.code;
+}
+
+export function isMigrationExpiredError(error: unknown) {
+  return getMigrationErrorCode(error) === "MIGRATION_EXPIRED";
+}
+
+export function isMigrationNotFoundError(error: unknown) {
+  return getMigrationErrorCode(error) === "MIGRATION_NOT_FOUND";
+}

@@ -222,6 +222,110 @@ describe("offline todo service", () => {
     });
   });
 
+  it("retries commit for an expired journal before cancelling", async () => {
+    setOnline(true);
+    const client = remote();
+    const store = makeStore();
+    const service = createTodoService("user-1", store.dispatch, client);
+    const snapshot = [{
+      createdAt: serverTodo.createdAt,
+      description: serverTodo.description,
+      done: serverTodo.done,
+      dueTo: null,
+      localId: serverTodo.id,
+      reminderOn: serverTodo.reminderOn,
+      serverId: serverTodo.id,
+      syncStatus: "synced" as const,
+      title: serverTodo.title,
+      updatedAt: serverTodo.updatedAt,
+    }];
+
+    localStorage.setItem(
+      "offline.todos.v1:user-1",
+      JSON.stringify({
+        baselineSnapshot: null,
+        lastSyncAt: null,
+        localOnly: false,
+        migrationJournal: {
+          checksum: "ignored",
+          committedAt: null,
+          expiresAt: "2020-01-01T00:00:00.000Z",
+          migrationId: "migration-1",
+          preparedAt: "2026-07-01T00:00:00.000Z",
+          snapshot,
+          status: "prepared",
+          todoCount: 1,
+        },
+        queue: [],
+        todos: [],
+        userId: "user-1",
+        version: 2,
+      }),
+    );
+
+    await service.initialize();
+
+    expect(client.commitLocalOnlyMigration).toHaveBeenCalledWith("migration-1");
+    expect(client.cancelLocalOnlyMigration).not.toHaveBeenCalled();
+    await expect(readOfflineStore("user-1")).resolves.toMatchObject({
+      localOnly: true,
+      migrationJournal: null,
+    });
+  });
+
+  it("abandons an expired journal when commit is rejected", async () => {
+    setOnline(true);
+    const client = remote();
+    vi.mocked(client.commitLocalOnlyMigration).mockRejectedValue({
+      data: { code: "MIGRATION_EXPIRED" },
+    });
+    const store = makeStore();
+    const service = createTodoService("user-1", store.dispatch, client);
+
+    localStorage.setItem(
+      "offline.todos.v1:user-1",
+      JSON.stringify({
+        baselineSnapshot: null,
+        lastSyncAt: null,
+        localOnly: false,
+        migrationJournal: {
+          checksum: "ignored",
+          committedAt: null,
+          expiresAt: "2020-01-01T00:00:00.000Z",
+          migrationId: "migration-1",
+          preparedAt: "2026-07-01T00:00:00.000Z",
+          snapshot: [{
+            createdAt: serverTodo.createdAt,
+            description: serverTodo.description,
+            done: serverTodo.done,
+            dueTo: null,
+            localId: serverTodo.id,
+            reminderOn: serverTodo.reminderOn,
+            serverId: serverTodo.id,
+            syncStatus: "synced",
+            title: serverTodo.title,
+            updatedAt: serverTodo.updatedAt,
+          }],
+          status: "prepared",
+          todoCount: 1,
+        },
+        queue: [],
+        todos: [],
+        userId: "user-1",
+        version: 2,
+      }),
+    );
+
+    await service.initialize();
+
+    expect(client.commitLocalOnlyMigration).toHaveBeenCalledWith("migration-1");
+    expect(client.cancelLocalOnlyMigration).toHaveBeenCalledWith("migration-1");
+    await expect(readOfflineStore("user-1")).resolves.toMatchObject({
+      localOnly: false,
+      migrationJournal: null,
+    });
+  });
+
   it("does not enable local-only mode while cloud changes are pending", async () => {
     setOnline(false);
     const store = makeStore();

@@ -14,6 +14,8 @@ import {
   createPreparedJournal,
   finalizeLocalOnlyStore,
   hasPendingMigrationCommit,
+  isMigrationExpiredError,
+  isMigrationNotFoundError,
   migrationTodosToLocal,
 } from "./migration";
 import { offlineStoreHydrated } from "./offlineSlice";
@@ -101,6 +103,19 @@ async function commitPreparedMigration(
     finalizeLocalOnlyStore(current, journal.snapshot));
 }
 
+async function abandonPreparedMigration(
+  userId: string,
+  dispatch: AppDispatch,
+  remote: TodoRemoteClient,
+  migrationId: string,
+) {
+  await remote.cancelLocalOnlyMigration(migrationId).catch(() => undefined);
+  return persist(userId, dispatch, current => ({
+    ...current,
+    migrationJournal: null,
+  }));
+}
+
 async function resumePendingMigration(
   userId: string,
   dispatch: AppDispatch,
@@ -109,14 +124,21 @@ async function resumePendingMigration(
 ) {
   const journal = store.migrationJournal;
   if (!journal || !hasPendingMigrationCommit(journal)) return store;
-  if (Date.parse(journal.expiresAt) <= Date.now()) {
-    await remote.cancelLocalOnlyMigration(journal.migrationId).catch(() => undefined);
-    return persist(userId, dispatch, current => ({
-      ...current,
-      migrationJournal: null,
-    }));
+
+  try {
+    return await commitPreparedMigration(userId, dispatch, remote, journal);
+  } catch (error) {
+    if (isMigrationExpiredError(error) || isMigrationNotFoundError(error)) {
+      return abandonPreparedMigration(
+        userId,
+        dispatch,
+        remote,
+        journal.migrationId,
+      );
+    }
+
+    throw error;
   }
-  return commitPreparedMigration(userId, dispatch, remote, journal);
 }
 
 export function createTodoService(

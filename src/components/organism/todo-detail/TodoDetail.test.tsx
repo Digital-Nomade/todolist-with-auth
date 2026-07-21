@@ -27,9 +27,16 @@ describe("TodoDetail", () => {
   });
 
   it("shows an empty state when there are no todos", () => {
-    render(<TodoDetail tIndex={0} />);
+    render(
+      <TodoDetail
+        paginatedTodos={{ data: [], first: 0, last: 0, limit: 10, total: 0 }}
+        tIndex={0}
+      />,
+    );
 
-    expect(screen.getByText("You have no todos")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "No todos yet" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /check/i })).not.toBeInTheDocument();
   });
 
   it("renders the selected todo description", () => {

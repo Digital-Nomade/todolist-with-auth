@@ -4,6 +4,8 @@ import {
   computeMigrationChecksum,
   createPreparedJournal,
   finalizeLocalOnlyStore,
+  getMigrationErrorCode,
+  isMigrationExpiredError,
   migrationTodosToLocal,
 } from "./migration";
 import { createEmptyStore } from "./mappers";
@@ -64,5 +66,13 @@ describe("local-only migration helpers", () => {
       status: "prepared",
       todoCount: 1,
     });
+  });
+
+  it("reads migration error codes from GraphQL error shapes", () => {
+    expect(getMigrationErrorCode({ data: { code: "MIGRATION_EXPIRED" } }))
+      .toBe("MIGRATION_EXPIRED");
+    expect(isMigrationExpiredError({
+      errors: [{ extensions: { code: "MIGRATION_EXPIRED" } }],
+    })).toBe(true);
   });
 });

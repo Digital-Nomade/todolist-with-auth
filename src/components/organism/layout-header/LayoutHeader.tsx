@@ -1,5 +1,4 @@
 import {
-  AddIcon,
   DashboardIcon,
   HomeIcon,
   NotificationIcon,
@@ -12,8 +11,9 @@ import { setToggleAddTodoModal } from "@/lib/features/todos/todoSlice";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { NotificaitonMenu } from "../notification-menu/NotificationMenu";
+import { AddTodoButton } from "./AddTodoButton";
 
 export function LayoutHeader() {
   const dispatch = useAppDispatch()
@@ -23,6 +23,7 @@ export function LayoutHeader() {
   const { hasNotifications, notifications } = useAppSelector(state => state.notification)
   const [logout, { isLoading: isLoggingOut }] = useLogoutMutation()
 
+  const [searchTerm, setSearchTerm] = useState("")
   const [showNotifications, setShowNotifications] = useState(false)
 
   useEffect(() => {
@@ -40,6 +41,12 @@ export function LayoutHeader() {
     setShowNotifications(state => !state)
   }
 
+  function handleSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const term = searchTerm.trim()
+    router.replace(term ? `/dashboard?search=${encodeURIComponent(term)}` : "/dashboard")
+  }
+
   async function handleLogout() {
     try {
       await logout().unwrap()
@@ -53,18 +60,33 @@ export function LayoutHeader() {
       <header className="flex justify-between w-full pt-8 px-8 h-fit flex-1 mb-14">
         <div className="flex gap-8 items-center w-full">
           {path !== "/home" && (
-            <div className="relative max-w-[300px] w-full">
-              <input className="bg-transparent border border-danger-light rounded-lg p-2 placeholder:text-danger-light w-full" type="text" placeholder="search to do"/>
-              <div className="absolute right-2 top-3">
+            <form
+              className="relative max-w-[300px] w-full"
+              onSubmit={handleSearch}
+              role="search"
+            >
+              <input
+                aria-label="Search todos"
+                className="bg-transparent border border-danger-light rounded-lg p-2 placeholder:text-danger-light w-full"
+                onChange={event => setSearchTerm(event.target.value)}
+                type="text"
+                placeholder="search to do"
+                value={searchTerm}
+              />
+              <button
+                aria-label="Submit todo search"
+                className="absolute right-2 top-3"
+                type="submit"
+              >
                 <SearchIcon />
-              </div>
-            </div>
+              </button>
+            </form>
           )}
-          <div className="flex items-center gap-2">
-            <h1 className="text-6xl font-thin text-white">Welcome {user?.username}</h1>
-            <button className="h-fit" onClick={handleAddToDo}>
-              <AddIcon />
-            </button>
+          <div className="flex items-center gap-8">
+            <h1 className="text-6xl font-thin text-white">
+              {path === "/home" ? `Welcome ${user?.username}` : "New todo"}
+            </h1>
+            <AddTodoButton onClick={handleAddToDo} />
           </div>
         </div>
         <nav>
@@ -87,6 +109,7 @@ export function LayoutHeader() {
             </li>
             <li className="h-[21px] after:h-[48px] relative">
               <button
+                aria-label="View notifications"
                 type="button"
                 onClick={handleViewNotifications}
               >

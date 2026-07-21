@@ -84,6 +84,7 @@ type PaginatedTodos {
 
 type Query {
   me: TodoUser!
+  searchTodos(pagination: TodoPaginationInput, term: String!): PaginatedTodos!
   todo(id: ID!): Todo!
   todos(pagination: TodoPaginationInput): PaginatedTodos!
 }
@@ -109,6 +110,10 @@ input ResetPasswordInput {
   token: String!
 }
 
+type Subscription {
+  todoChanged: TodoChangeEvent!
+}
+
 type Todo {
   createdAt: DateTime!
   description: String!
@@ -118,6 +123,19 @@ type Todo {
   reminderOn: DateTime
   title: String!
   updatedAt: DateTime!
+}
+
+type TodoChangeEvent {
+  occurredAt: String!
+  todo: Todo
+  todoId: ID!
+  type: TodoChangeType!
+}
+
+enum TodoChangeType {
+  CREATED
+  DELETED
+  UPDATED
 }
 
 type TodoLocalOnlyMigration {

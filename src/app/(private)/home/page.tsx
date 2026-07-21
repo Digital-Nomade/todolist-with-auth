@@ -18,7 +18,7 @@ export default function HomePage() {
   }
 
   return (
-    <main className='p-8 flex flex-1 w-full'>
+    <main className='p-8 flex flex-1 w-full min-h-0'>
       <TodoDetail
         paginatedTodos={todosData}
         selectedTodo={selectedTodo}

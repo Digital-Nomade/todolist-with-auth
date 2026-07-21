@@ -20,17 +20,19 @@ export function useOfflineTodos() {
   const state = useAppSelector(current => current.offlineTodos);
   const service = useService();
   const data = useMemo(() => state.todos.map(toTodo), [state.todos]);
+  const paginatedData = useMemo(() => ({
+    data,
+    first: data.length ? 1 : 0,
+    last: data.length,
+    limit: data.length,
+    total: data.length,
+  }), [data]);
 
   return {
-    data: {
-      data,
-      first: data.length ? 1 : 0,
-      last: data.length,
-      limit: data.length,
-      total: data.length,
-    },
+    data: paginatedData,
     error: state.error,
     isLoading: !state.hydrated,
+    localOnly: state.localOnly,
     refresh: () => service?.refresh(),
   };
 }

@@ -4,6 +4,7 @@ import {
   CreateTodoDocument,
   DeleteTodoDocument,
   PrepareTodoLocalOnlyMigrationDocument,
+  SearchTodosDocument,
   TodoDocument,
   TodosDocument,
   UpdateTodoDocument,
@@ -13,6 +14,8 @@ import {
   type CreateTodoMutationVariables,
   type DeleteTodoMutation,
   type PrepareTodoLocalOnlyMigrationMutation,
+  type SearchTodosQuery,
+  type SearchTodosQueryVariables,
   type TodoQuery,
   type TodosQueryVariables,
   type TodosQuery,
@@ -37,6 +40,11 @@ type GraphqlTodo =
 export interface CreateTodoRequest {
   idempotencyKey?: string;
   input: AddTodo;
+}
+
+export interface SearchTodosRequest {
+  pagination?: TodoPagination;
+  term: string;
 }
 
 export interface TodoLocalOnlyMigration {
@@ -127,6 +135,30 @@ export const todoApi = api.injectEndpoints({
         ...(result?.data.map(({ id }) => ({ type: "todos" as const, id })) ?? []),
       ],
     }),
+    searchTodos: build.query<PaginatedTodo, SearchTodosRequest>({
+      query: ({ pagination, term }) => ({
+        document: SearchTodosDocument,
+        variables: {
+          pagination: {
+            currentPage: pagination?.currentPage ?? defaultPagination.currentPage,
+            limit: pagination?.limit ?? defaultPagination.limit,
+            orderBy: pagination?.orderBy ?? defaultPagination.orderBy,
+            ...(pagination?.total === undefined
+              ? {}
+              : { total: pagination.total }),
+          },
+          term: term.trim(),
+        } satisfies SearchTodosQueryVariables,
+      }),
+      transformResponse: (response: SearchTodosQuery) => ({
+        ...response.searchTodos,
+        data: response.searchTodos.data.map(toTodo),
+      }),
+      providesTags: result => [
+        { type: "todos", id: "LIST" },
+        ...(result?.data.map(({ id }) => ({ type: "todos" as const, id })) ?? []),
+      ],
+    }),
     getTodo: build.query<Todo, string>({
       query: id => ({
         document: TodoDocument,
@@ -204,5 +236,6 @@ export const {
   useDeleteTodoMutation,
   useGetTodoQuery,
   useListTodosQuery,
+  useSearchTodosQuery,
   useUpdateTodoMutation,
 } = todoApi;

@@ -27,6 +27,7 @@ cp .env.example .env.local
 | Variable | Scope | Default | Purpose |
 |---|---|---|---|
 | `GRAPHQL_BACKEND_URL` | Server only | `http://localhost:3773/graphql` | Target for the same-origin `/graphql` proxy |
+| `NEXT_PUBLIC_GRAPHQL_WS_URL` | Browser | `ws://localhost:3773/graphql` | `graphql-transport-ws` endpoint for authenticated todo events |
 
 The frontend development server runs on port **3883** so it does not conflict with the backend on port **3773**.
 

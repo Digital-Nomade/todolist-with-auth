@@ -2,7 +2,9 @@ const SESSION_KEY = "todo-auth.session";
 const LEGACY_REFRESH_TOKEN_KEY = "todo-auth.refresh-token";
 
 let accessToken: string | null = null;
+let accessTokenExpiresAt: number | null = null;
 let sessionMetadata: SessionMetadata | null = null;
+const accessTokenListeners = new Set<(token: string | null) => void>();
 
 export interface SessionTokens {
   accessToken: string;
@@ -18,6 +20,27 @@ function browserStorage() {
 
 export function getAccessToken() {
   return accessToken;
+}
+
+export function getAccessTokenExpiresAt() {
+  return accessTokenExpiresAt;
+}
+
+export function subscribeToAccessTokenChanges(
+  listener: (token: string | null) => void,
+) {
+  accessTokenListeners.add(listener);
+  return () => accessTokenListeners.delete(listener);
+}
+
+function notifyAccessTokenChanged() {
+  for (const listener of accessTokenListeners) {
+    try {
+      listener(accessToken);
+    } catch {
+      // Session rotation must not fail because a transport listener failed.
+    }
+  }
 }
 
 export function getRefreshToken() {
@@ -41,6 +64,7 @@ export function getSessionMetadata() {
 }
 
 export function setSession(tokens: SessionTokens) {
+  const previousAccessToken = accessToken;
   const nextSession = {
     accessToken: tokens.accessToken,
     expiresIn: tokens.expiresIn,
@@ -54,12 +78,17 @@ export function setSession(tokens: SessionTokens) {
   }));
   storage?.removeItem(LEGACY_REFRESH_TOKEN_KEY);
   accessToken = nextSession.accessToken;
+  accessTokenExpiresAt = Date.now() + nextSession.expiresIn * 1_000;
   sessionMetadata = nextSession;
+  if (accessToken !== previousAccessToken) notifyAccessTokenChanged();
 }
 
 export function clearSession() {
+  const hadAccessToken = accessToken !== null;
   accessToken = null;
+  accessTokenExpiresAt = null;
   sessionMetadata = null;
   browserStorage()?.removeItem(SESSION_KEY);
   browserStorage()?.removeItem(LEGACY_REFRESH_TOKEN_KEY);
+  if (hadAccessToken) notifyAccessTokenChanged();
 }

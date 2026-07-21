@@ -39,3 +39,101 @@ input[type="date"]::placeholder {
 ::-webkit-calendar-picker-indicator {
   background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="15" viewBox="0 0 24 24"><path fill="%23eeb0b4" d="M20 3h-1V1h-2v2H7V1H5v2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 18H4V8h16v13z"/></svg>');
 }
+
+.add-todo-button {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border: 2px solid rgba(238, 176, 180, 0.35);
+  border-radius: 9999px;
+  background: transparent;
+  overflow: visible;
+  transition: border-color 0.25s ease, transform 0.25s ease;
+}
+
+.add-todo-button__icon {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+}
+
+.add-todo-button__wave {
+  position: absolute;
+  inset: -6px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.add-todo-button__wave svg {
+  width: 100%;
+  height: 100%;
+  animation: add-todo-wave-spin 10s linear infinite;
+}
+
+.add-todo-button__wave-path {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.add-todo-button__wave-path--primary {
+  stroke-dasharray: 10 14;
+  animation: add-todo-wave-flow 2.2s linear infinite;
+}
+
+.add-todo-button__wave-path--secondary {
+  stroke-dasharray: 6 18;
+  opacity: 0.55;
+  animation: add-todo-wave-flow 3.1s linear infinite reverse;
+}
+
+.add-todo-button:hover,
+.add-todo-button:focus-visible {
+  border-color: transparent;
+  transform: translateY(-1px);
+}
+
+.add-todo-button:hover .add-todo-button__wave,
+.add-todo-button:focus-visible .add-todo-button__wave {
+  opacity: 1;
+}
+
+.add-todo-button:hover .add-todo-button__wave-path--primary,
+.add-todo-button:focus-visible .add-todo-button__wave-path--primary {
+  animation:
+    add-todo-wave-flow 1.6s linear infinite,
+    add-todo-wave-pulse 2.4s ease-in-out infinite;
+}
+
+.add-todo-button:hover .add-todo-button__wave-path--secondary,
+.add-todo-button:focus-visible .add-todo-button__wave-path--secondary {
+  animation:
+    add-todo-wave-flow 2.4s linear infinite reverse,
+    add-todo-wave-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes add-todo-wave-flow {
+  to {
+    stroke-dashoffset: -48;
+  }
+}
+
+@keyframes add-todo-wave-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes add-todo-wave-pulse {
+  0%,
+  100% {
+    opacity: 0.75;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}

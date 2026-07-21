@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { useAnimate } from "framer-motion";
 import { useEffect, useState } from "react";
 import { DetailHeader } from "./components/detail-header/DetailHeader";
+import { TodoEmptyState } from "./components/todo-empty-state/TodoEmptyState";
 import { TodoNavigationDirection } from "./types/TodoDetail.types";
 
 interface Props {
@@ -45,16 +46,24 @@ export function TodoDetail({ paginatedTodos, selectedTodo, onSelectTodo, tIndex 
   }, [selectedTodo])
 
   useEffect(() => {
-    if (paginatedTodos && paginatedTodos.data) {
-      setTodos(paginatedTodos?.data)
+    if (paginatedTodos?.data) {
+      setTodos(paginatedTodos.data);
     }
-  }, [paginatedTodos])
+  }, [paginatedTodos]);
 
   useEffect(() => {
-    if (todos?.length) {
-      setCurrentTodo(todos[0])
+    if (!todos?.length) {
+      setCurrentTodo(undefined);
+      setTodoIndex(0);
+      return;
     }
-  }, [todos])
+
+    setCurrentTodo(current =>
+      current && todos.some(todo => todo.id === current.id)
+        ? current
+        : todos[0],
+    );
+  }, [todos]);
 
   function handleTodoNavigation(direction: TodoNavigationDirection) {
     switch(direction) {
@@ -266,12 +275,12 @@ export function TodoDetail({ paginatedTodos, selectedTodo, onSelectTodo, tIndex 
     )
   }
 
-  if (!todos) {
-    return (
-      <section className="mx-auto max-w-[684px]">
-        <p>You have no todos</p>
-      </section>
-    )
+  if (!todos?.length) {
+    return <TodoEmptyState />;
+  }
+
+  if (!currentTodo) {
+    return <TodoEmptyState />;
   }
 
   return (

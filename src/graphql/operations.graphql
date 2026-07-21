@@ -121,6 +121,18 @@ query Todos($pagination: TodoPaginationInput) {
   }
 }
 
+query SearchTodos($term: String!, $pagination: TodoPaginationInput) {
+  searchTodos(term: $term, pagination: $pagination) {
+    data {
+      ...TodoFields
+    }
+    first
+    last
+    limit
+    total
+  }
+}
+
 query Todo($id: ID!) {
   todo(id: $id) {
     ...TodoFields
@@ -166,5 +178,16 @@ mutation CommitTodoLocalOnlyMigration($migrationId: ID!) {
 mutation CancelTodoLocalOnlyMigration($migrationId: ID!) {
   cancelTodoLocalOnlyMigration(migrationId: $migrationId) {
     message
+  }
+}
+
+subscription TodoChanged {
+  todoChanged {
+    occurredAt
+    todo {
+      ...TodoFields
+    }
+    todoId
+    type
   }
 }

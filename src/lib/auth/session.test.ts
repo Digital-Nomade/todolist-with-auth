@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   clearSession,
   getAccessToken,
+  getAccessTokenExpiresAt,
   getRefreshToken,
   getSessionMetadata,
   setSession,
@@ -9,11 +10,13 @@ import {
 
 describe("session storage", () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
     window.localStorage.clear();
     clearSession();
   });
 
   it("keeps access, refresh, and expiry metadata together", () => {
+    vi.spyOn(Date, "now").mockReturnValue(1_000);
     setSession({
       accessToken: "access-1",
       expiresIn: 900,
@@ -21,6 +24,7 @@ describe("session storage", () => {
     });
 
     expect(getAccessToken()).toBe("access-1");
+    expect(getAccessTokenExpiresAt()).toBe(901_000);
     expect(getRefreshToken()).toBe("refresh-1");
     expect(getSessionMetadata()).toEqual({
       accessToken: "access-1",
@@ -28,6 +32,7 @@ describe("session storage", () => {
       refreshToken: "refresh-1",
     });
     expect(window.localStorage.getItem("todo-auth.session")).not.toContain("access-1");
+    vi.restoreAllMocks();
   });
 
   it("does not swap the access token when refresh persistence fails", () => {

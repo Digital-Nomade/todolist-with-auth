@@ -63,7 +63,7 @@ describe("LayoutHeader", () => {
   it("renders the active username and navigation links", () => {
     renderHeader();
 
-    expect(screen.getByText(/Welcome person/)).toBeInTheDocument();
+    expect(screen.getByText("New todo")).toBeInTheDocument();
     expect(screen.getByLabelText("Profile")).toHaveAttribute("href", "/profile");
     expect(screen.getAllByRole("link").some((link) => link.getAttribute("href") === "/home"))
       .toBe(true);
@@ -72,11 +72,26 @@ describe("LayoutHeader", () => {
   it("toggles the notification menu", () => {
     renderHeader();
 
-    const [, notificationButton] = screen.getAllByRole("button");
+    const notificationButton = screen.getByRole("button", {
+      name: "View notifications",
+    });
 
     expect(screen.queryByText("Notification 1")).not.toBeInTheDocument();
     fireEvent.click(notificationButton);
     expect(screen.getByText("Notification 1")).toBeInTheDocument();
+  });
+
+  it("navigates to a trimmed todo search", () => {
+    renderHeader();
+
+    fireEvent.change(screen.getByRole("textbox", { name: "Search todos" }), {
+      target: { value: "  weekly groceries  " },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Submit todo search" }));
+
+    expect(mocks.replace).toHaveBeenCalledWith(
+      "/dashboard?search=weekly%20groceries",
+    );
   });
 
   it("logs out and redirects to login", async () => {

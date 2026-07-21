@@ -3,11 +3,46 @@
 import { TodosList } from "@/components/feats/dashboard/todos-list/TodosList"
 import { TodoDetail } from "@/components/organism"
 import { useOfflineTodos } from "@/lib/features/todos/offline/hooks"
+import { useSearchTodosQuery } from "@/lib/features/todos/todoApi"
 import { Todo } from "@/types/Todo.type"
-import { useEffect, useState } from "react"
+import { skipToken } from "@reduxjs/toolkit/query"
+import { useSearchParams } from "next/navigation"
+import { useEffect, useMemo, useState } from "react"
 
 export default function Dashboard() {
-  const { data: todosData, error, isLoading } = useOfflineTodos()
+  const searchTerm = useSearchParams().get("search")?.trim() ?? ""
+  const offlineTodos = useOfflineTodos()
+  const remoteSearch = useSearchTodosQuery(
+    searchTerm && !offlineTodos.localOnly
+      ? {
+          pagination: { currentPage: 1, limit: 50, orderBy: "DESC" },
+          term: searchTerm,
+        }
+      : skipToken,
+  )
+  const localSearchData = useMemo(() => {
+    if (!searchTerm || !offlineTodos.localOnly) return null
+    const data = offlineTodos.data.data.filter(todo => {
+          const normalizedTerm = searchTerm.toLocaleLowerCase()
+          return todo.title.toLocaleLowerCase().includes(normalizedTerm)
+            || todo.description.toLocaleLowerCase().includes(normalizedTerm)
+        })
+    return {
+      data,
+      first: data.length ? 1 : 0,
+      last: data.length,
+      limit: data.length,
+      total: data.length,
+    }
+  }, [offlineTodos.data, offlineTodos.localOnly, searchTerm])
+  const todosData = searchTerm
+    ? localSearchData ?? remoteSearch.data
+    : offlineTodos.data
+  const error = searchTerm && !offlineTodos.localOnly
+    ? remoteSearch.error
+    : offlineTodos.error
+  const isLoading = offlineTodos.isLoading
+    || Boolean(searchTerm && !offlineTodos.localOnly && remoteSearch.isLoading)
   const [todos, setTodos] = useState<Todo[]>([])
   const [selectedTodo, setSelectedTodo] = useState<Todo>()
   const [todoIndex, setTodoIndex] = useState(0)
@@ -33,7 +68,7 @@ export default function Dashboard() {
     return <main className="p-8">Loading todos…</main>
   }
 
-  if (error && !todosData.data.length) {
+  if (error && !todosData?.data.length) {
     return <main className="p-8">Unable to load todos.</main>
   }
 
@@ -57,7 +92,13 @@ export default function Dashboard() {
             ? (
               <TodoDetail
                 selectedTodo={selectedTodo}
-                paginatedTodos={todosData}
+                paginatedTodos={todosData ?? {
+                  data: [],
+                  first: 0,
+                  last: 0,
+                  limit: 0,
+                  total: 0,
+                }}
                 onSelectTodo={setSelectedTodo}
                 tIndex={todoIndex}
               />

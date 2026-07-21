@@ -207,6 +207,29 @@ export async function installGraphqlMock(page: Page, options: GraphqlMockOptions
       case "Todos":
         return route.fulfill(graphqlSuccess({ todos: paginatedTodos(state.todos) }));
 
+      case "Todo": {
+        const todo = state.todos.find(candidate => candidate.id === body.variables?.id);
+        return todo
+          ? route.fulfill(graphqlSuccess({ todo }))
+          : route.fulfill(graphqlError("NOT_FOUND", "Todo not found."));
+      }
+
+      case "SearchTodos": {
+        const term = String(body.variables?.term ?? "").trim().toLocaleLowerCase();
+        if (!term) {
+          return route.fulfill(graphqlError(
+            "BAD_USER_INPUT",
+            "Search term must not be empty.",
+          ));
+        }
+        const matches = state.todos.filter(todo =>
+          todo.title.toLocaleLowerCase().includes(term)
+          || todo.description.toLocaleLowerCase().includes(term));
+        return route.fulfill(graphqlSuccess({
+          searchTodos: paginatedTodos(matches),
+        }));
+      }
+
       case "CreateTodo": {
         if (state.activeMigration) {
           return route.fulfill(graphqlError(
@@ -278,7 +301,9 @@ export async function installGraphqlMock(page: Page, options: GraphqlMockOptions
 
       case "PrepareTodoLocalOnlyMigration": {
         state.migrationCalls.prepare += 1;
-        state.activeMigration = createMockMigration(state.todos);
+        if (!state.activeMigration) {
+          state.activeMigration = createMockMigration(state.todos);
+        }
         const migration = state.activeMigration;
         return route.fulfill(graphqlSuccess({
           prepareTodoLocalOnlyMigration: {
@@ -306,6 +331,9 @@ export async function installGraphqlMock(page: Page, options: GraphqlMockOptions
         }
         if (!state.activeMigration || state.activeMigration.migrationId !== migrationId) {
           return route.fulfill(graphqlError("MIGRATION_NOT_FOUND", "Migration not found"));
+        }
+        if (Date.parse(state.activeMigration.expiresAt) <= Date.now()) {
+          return route.fulfill(graphqlError("MIGRATION_EXPIRED", "Migration expired"));
         }
         const deletedCount = state.activeMigration.todos.length;
         const snapshotIds = new Set(state.activeMigration.todos.map(todo => todo.id));
