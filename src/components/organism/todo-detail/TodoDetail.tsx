@@ -9,7 +9,7 @@ import { isTodoUnavailableError } from "@/lib/features/todos/todoApi";
 import { PaginatedTodo, Todo } from "@/types/Todo.type";
 import { format } from "date-fns";
 import { useAnimate } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DetailHeader } from "./components/detail-header/DetailHeader";
 import { TodoEmptyState } from "./components/todo-empty-state/TodoEmptyState";
 import { TodoNavigationDirection } from "./types/TodoDetail.types";
@@ -31,6 +31,7 @@ export function TodoDetail({ paginatedTodos, selectedTodo, onSelectTodo, tIndex 
   const [nextButtonScope, animateNextButton] = useAnimate<HTMLDivElement>()
   const [previousButtonScope, animatePreviousButton] = useAnimate<HTMLDivElement>()
   const { deleteTodo, updateTodo } = useOfflineTodoMutations()
+  const previousTodoCount = useRef(0)
 
   useEffect(() => {
     if (tIndex !== undefined) {
@@ -55,6 +56,17 @@ export function TodoDetail({ paginatedTodos, selectedTodo, onSelectTodo, tIndex 
     if (!todos?.length) {
       setCurrentTodo(undefined);
       setTodoIndex(0);
+      previousTodoCount.current = 0;
+      return;
+    }
+
+    const addedTodo = todos.length > previousTodoCount.current;
+    previousTodoCount.current = todos.length;
+
+    if (addedTodo) {
+      setTodoIndex(0);
+      setCurrentTodo(todos[0]);
+      onSelectTodo?.(todos[0]);
       return;
     }
 
@@ -63,7 +75,7 @@ export function TodoDetail({ paginatedTodos, selectedTodo, onSelectTodo, tIndex 
         ? current
         : todos[0],
     );
-  }, [todos]);
+  }, [onSelectTodo, todos]);
 
   function handleTodoNavigation(direction: TodoNavigationDirection) {
     switch(direction) {
