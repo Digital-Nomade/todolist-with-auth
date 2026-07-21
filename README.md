@@ -41,7 +41,8 @@ The frontend development server runs on port **3883** so it does not conflict wi
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript check |
 | `npm run test` | Vitest unit test suite |
-| `npm run test:e2e` | Playwright end-to-end test suite |
+| `npm run test:e2e` | Playwright end-to-end test suite (dev server) |
+| `npm run test:e2e:hook` | Build production app and run Playwright (used by pre-push) |
 | `npm run test:e2e:ui` | Playwright interactive UI mode |
 | `npm run test:e2e:headed` | Playwright headed browser mode |
 | `npm run verify` | Lint, unit tests, and E2E (same as the pre-commit hook) |
@@ -179,7 +180,7 @@ Playwright drives the full application in a real browser. Tests live under `e2e/
 Configuration lives in `playwright.config.ts`:
 
 - `baseURL` — `http://localhost:3883`
-- `webServer` — starts `npm run dev` automatically
+- `webServer` — starts a dedicated app server for the run (`npm run dev` locally, `npm run start` in CI/pre-push)
 - Reports — `playwright-report/` and `test-results/` (gitignored)
 
 Run the suite:
@@ -234,7 +235,7 @@ npm run test:e2e
 | Hook | Command | Checks |
 |---|---|---|
 | `pre-commit` | `npm run lint && npm run test` | ESLint and Vitest unit tests |
-| `pre-push` | `npm run test:e2e` | Playwright end-to-end suite |
+| `pre-push` | `npm run test:e2e:hook` | Production build plus Playwright end-to-end suite |
 
 Run the same checks manually with:
 
